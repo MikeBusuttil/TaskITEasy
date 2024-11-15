@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "Task IT Easy"
+version = "0.1.0"
+description = ""
+authors = ["Mike Busuttil <mikebusuttil@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+python-dateutil = "^2.9.0.post0"
+flask = "^3.1.0"
+gunicorn = "^23.0.0"
+sh = "^2.1.0"
+neo4j = "^5.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

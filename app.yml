@@ -1,0 +1,42 @@
+services:
+  db:
+    container_name: db
+    image: neo4j
+    volumes:
+      - ./data:/var/lib/neo4j/import
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/${DB_PASSWORD}
+      TZ: America/Toronto
+    network_mode: bridge
+    # uncomment to allow browser access with http://localhost:7474
+    ports:
+     - 7474:7474
+     - 7687:7687
+  api:
+    container_name: data_dump_api
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:alpine
+        RUN apk add --no-cache tzdata
+        ENV TZ America/Toronto
+        RUN pip3 install python-dateutil flask gunicorn sh neo4j
+    depends_on:
+      - db
+    links:
+     - db:db
+    restart: always
+    environment:
+      DB_KEY: ${DB_PASSWORD}
+      VIRTUAL_HOST: tasks.techiteasy.ca
+      LETSENCRYPT_HOST: tasks.techiteasy.ca
+      LETSENCRYPT_EMAIL: sysadmin@techiteasy.ca
+    volumes:
+      - ./api:/api
+    working_dir: /api
+    entrypoint: gunicorn api:api -w 1 --threads 1 -b 0.0.0.0:80
+    # uncomment to test locally with http://localhost:
+    ports:
+      - 80:80
+    network_mode: bridge
