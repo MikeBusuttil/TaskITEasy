@@ -30,3 +30,31 @@ def create_user(user=None, org=None):
         results = db.run(cql, params)
         id = [r['id'] for r in results][0]
     return id
+
+def create_task(user=None, task=None):
+    task_keys = ['title', 'order', 'point_estimate', 'time_estimate', 'description', 'x0', 'x1', 'y0', 'y1', 'color']
+    task_props = ', '.join([f'{key}: ${key}' for key in task_keys if key in task])
+    params = dict(id=user) | {key: task[key] for key in task_keys if key in task}
+    
+    parent_match, parent_relation = "", ""
+    if "parent" in task:
+        parent_match = "\n".join(["MATCH (parent:Task)", "WHERE elementId(parent) = $parent"])
+        parent_relation = "    (parent)-[:includes]->(task),"
+        params['parent'] = task["parent"]
+
+    cql = "\n".join([
+        "MATCH (person:Person)-[]->(org:Organization)",
+        "WHERE elementId(person) = $id",
+        parent_match,
+        "CREATE",
+        f"    (task:Task {{{task_props}}}),",
+        "    (org)-[:owns]->(task),",
+        parent_relation,
+        f"    (person)-[:created {{at: datetime()}}]->(task)",
+        "RETURN elementId(task) AS id"
+    ])
+
+    with DB() as db:
+        results = db.run(cql, params)
+        id = [r['id'] for r in results][0]
+    return id

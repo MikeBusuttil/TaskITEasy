@@ -3,11 +3,16 @@ services:
     container_name: db
     image: neo4j
     volumes:
-      - ./data:/var/lib/neo4j/import
+      - ./data:/data
     restart: always
     environment:
       NEO4J_AUTH: neo4j/${DB_PASSWORD}
       TZ: America/Toronto
+      VIRTUAL_HOST: ${ADMIN_HOST}
+      LETSENCRYPT_HOST: ${ADMIN_HOST}
+      VIRTUAL_PORT: 7474
+      # NEO4J_dbms_connector_http_listen__address: 80
+      # NEO4J_dbms_connector_http_advertised__address: 80
     network_mode: bridge
     # uncomment to allow browser access with http://localhost:7474
     ports:
@@ -29,14 +34,13 @@ services:
     restart: always
     environment:
       DB_PASSWORD: ${DB_PASSWORD}
-      VIRTUAL_HOST: tasks.techiteasy.ca
-      LETSENCRYPT_HOST: tasks.techiteasy.ca
-      LETSENCRYPT_EMAIL: sysadmin@techiteasy.ca
+      VIRTUAL_HOST: ${API_HOST}
+      LETSENCRYPT_HOST: ${API_HOST}
     volumes:
       - ./api:/api
     working_dir: /api
     # entrypoint: gunicorn api:api -w 1 --threads 1 -b 0.0.0.0:80
-    # uncomment entrypoint & ports test locally with hot reload at http://localhost:
+    # uncomment entrypoint & ports to test locally with hot reload at http://localhost:
     entrypoint: python api.py
     ports:
       - 80:80

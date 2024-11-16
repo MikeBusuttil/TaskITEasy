@@ -10,12 +10,21 @@
 - git
 - Linux (tested on Ubuntu)
 
+### Serving on-line
+
+- Linux server exposed to the internet
+  - with A-record's for API, GUI, and API admin
+- nginx reverse proxy
+
 ## Getting Started
 
 ```bash
 git clone
 poetry install
 echo "DB_PASSWORD=s0m3_sup3r_s3cur3_p4ssw0rd" > .env
+echo "API_HOST=api.someurliown.io" >> .env
+echo "GUI_HOST=gui.someurliown.io" >> .env
+echo "ADMIN_HOST=api-admin.someurliown.io" >> .env
 poetry run docker compose -f app.yml up -d
 ```
 
@@ -23,9 +32,9 @@ poetry run docker compose -f app.yml up -d
 
 - deploy API
   - create endpoints
-    - create task
-    - update task
-    - delete task
+    - update task (/task PATCH)
+    - fetch tasks (/task GET)
+    - delete task (/task DELETE)
 - deploy DB
   - create schema
     * put all users in 1 DB (for now)
