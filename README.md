@@ -23,7 +23,6 @@ poetry run docker compose -f app.yml up -d
 
 - deploy API
   - create endpoints
-    - create user (and organization)
     - create task
     - update task
     - delete task
@@ -61,6 +60,7 @@ poetry run docker compose -f app.yml up -d
 - keep history of all notes/props
 - integrate with GitHub cards
 - integrate with Jira
+- undo accidental deletion
 
 ## Notes
 

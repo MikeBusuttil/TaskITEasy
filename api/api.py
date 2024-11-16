@@ -6,16 +6,16 @@ import log, db
 api = Flask(__name__)
 authenticated = True
 
-@api.route('/store', methods=['POST'])
-def store():
+@api.route('/user', methods=['POST'])
+def user():
     # ip_address = request.environ.get('HTTP_X_REAL_IP') or request.remote_addr
     try:
-        db.store(request.json['records'])
+        params = {key: request.json[key] for key in ['user', 'org'] if key in request.json}
+        user_id = db.create_user(**params)
+        return jsonify(dict(user_id=user_id)), 200
     except:
         log.stderr(format_exc())
         return '👎', 500
-
-    return '👍', 200
 
 @api.route('/rmse', methods=['POST'])
 def rmse():
@@ -44,4 +44,4 @@ def get():
         return '👎', 500
 
 if __name__ == '__main__':
-    api.run()
+    api.run(host='0.0.0.0', port=80, debug=True)

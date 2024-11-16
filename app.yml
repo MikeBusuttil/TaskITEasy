@@ -14,7 +14,7 @@ services:
      - 7474:7474
      - 7687:7687
   api:
-    container_name: data_dump_api
+    container_name: api
     build:
       context: .
       dockerfile_inline: |
@@ -28,15 +28,16 @@ services:
      - db:db
     restart: always
     environment:
-      DB_KEY: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD}
       VIRTUAL_HOST: tasks.techiteasy.ca
       LETSENCRYPT_HOST: tasks.techiteasy.ca
       LETSENCRYPT_EMAIL: sysadmin@techiteasy.ca
     volumes:
       - ./api:/api
     working_dir: /api
-    entrypoint: gunicorn api:api -w 1 --threads 1 -b 0.0.0.0:80
-    # uncomment to test locally with http://localhost:
+    # entrypoint: gunicorn api:api -w 1 --threads 1 -b 0.0.0.0:80
+    # uncomment entrypoint & ports test locally with hot reload at http://localhost:
+    entrypoint: python api.py
     ports:
       - 80:80
     network_mode: bridge

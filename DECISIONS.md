@@ -1,8 +1,5 @@
-## completed
+## decided
 
-- neo4j for tasks DB
-- Flask for API
-- docker compose for environment orchestration
 - React using Remix for the view UI
   - if that's too cumbersome just switch back to CRA
 - Tailwind for UI.  Get components from places like
@@ -22,3 +19,9 @@
 
 - authentication
 - payment tiering?
+
+## implemented
+
+- neo4j for tasks DB
+- Flask for API
+- docker compose for environment orchestration
