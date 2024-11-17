@@ -31,11 +31,17 @@ def create_user(user=None, org=None):
         id = [r['id'] for r in results][0]
     return id
 
-def create_task(user=None, task=None):
-    task_keys = ['title', 'order', 'point_estimate', 'time_estimate', 'description', 'x0', 'x1', 'y0', 'y1', 'color']
+def _format_task_data(task):
+    task_keys = ['title', 'order', 'point_estimate', 'time_estimate_seconds', 'description', 'x0', 'x1', 'y0', 'y1', 'color']
     task_props = ', '.join([f'{key}: ${key}' for key in task_keys if key in task])
-    params = dict(id=user) | {key: task[key] for key in task_keys if key in task}
+    params = {key: task[key] for key in task_keys if key in task}
+    return params, task_props
+
+def create_task(user=None, task=None):
+    params, task_props = _format_task_data(task)
+    params["id"] = user
     
+    #TODO: clean this up to look more like update_tasks
     parent_match, parent_relation = "", ""
     if "parent" in task:
         parent_match = "\n".join(["MATCH (parent:Task)", "WHERE elementId(parent) = $parent"])
@@ -50,7 +56,7 @@ def create_task(user=None, task=None):
         f"    (task:Task {{{task_props}}}),",
         "    (org)-[:owns]->(task),",
         parent_relation,
-        f"    (person)-[:created {{at: datetime()}}]->(task)",
+        "    (person)-[:created {at: datetime()}]->(task)",
         "RETURN elementId(task) AS id"
     ])
 
@@ -58,3 +64,39 @@ def create_task(user=None, task=None):
         results = db.run(cql, params)
         id = [r['id'] for r in results][0]
     return id
+
+def update_task(task=None, user=None):
+    params, task_props = _format_task_data(task)
+    params['task_id'] = task['id']
+    params['user_id'] = user
+
+    matches = [
+        "MATCH (person:Person)",
+        "WHERE elementId(person) = $user_id",
+        "MATCH (task:Task)",
+        "WHERE elementId(task) = $task_id",
+        "OPTIONAL MATCH (:Task)-[parent_bonds:includes]->(task:Task)-[child_bonds:includes]->(:Task)",
+    ]
+    relations = ["CREATE (person)-[:updated {at: datetime()}]->(task)"]
+
+
+    for relation, tasks in [
+        ['parent', task['parents'] if 'parents' in task else []],
+        ['child', task['children'] if 'children' in task else []]
+    ]:
+        for n, task_id in enumerate(tasks):
+            matches.extend([f"MATCH ({relation}{n}:Task)", f"WHERE elementId({relation}{n}) = ${relation}{n}"])
+            relations.append(f"MERGE ({relation}{n})-[:includes]->(task)" if relation == 'parent' else f"MERGE (task)-[:includes]->({relation}{n})")
+            params[f"{relation}{n}"] = task_id
+
+    cql = matches + [
+        f"SET task = {{{task_props}}}",
+        "DELETE parent_bonds, child_bonds",
+    ] + relations
+    cql = "\n".join(cql)
+    log.stderr("\n", params, "\n", cql)
+
+    with DB() as db:
+        db.run(cql, params)
+    
+    return True

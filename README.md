@@ -33,6 +33,7 @@ poetry run docker compose -f app.yml up -d
 - deploy API
   - create endpoints
     - update task (/task PATCH)
+      - test all scenarios again before marking this as done
     - fetch tasks (/task GET)
     - delete task (/task DELETE)
 - deploy DB
@@ -46,6 +47,7 @@ poetry run docker compose -f app.yml up -d
       * use https://github.com/atlassian/pragmatic-drag-and-drop
     - alt+⬆, alt+⬇, alt+⬅, alt+➡
     - ([shift]+)[tab]
+    - highlight+[tab]
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
@@ -66,7 +68,7 @@ poetry run docker compose -f app.yml up -d
   - attached images
   - in-line images
   - content other than the title
-- keep history of all notes/props
+- keep history of all notes/props/updates
 - integrate with GitHub cards
 - integrate with Jira
 - undo accidental deletion
