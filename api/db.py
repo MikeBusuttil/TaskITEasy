@@ -100,3 +100,29 @@ def update_task(task=None, user=None):
         db.run(cql, params)
     
     return True
+
+def _merge_task(result):
+    return dict(
+        id=result['id'],
+        created=str(result['created']),
+        parents = list(set(result['parents'])),
+        children = list(set(result['children'])),
+        **result['properties'],
+    )
+def get_tasks(user=None):
+    params = dict(user_id=user)
+
+    cql = "\n".join([
+        "MATCH (person:Person)-[]->(org:Organization)-[:owns]->(task:Task)",
+        "WHERE elementId(person) = $user_id",
+        "OPTIONAL MATCH (parents:Task)-[]->(task)",
+        "OPTIONAL MATCH (task)-[]->(children:Task)",
+        "OPTIONAL MATCH (:Person)-[c:created]->(task)",
+        "RETURN elementId(task) as id, properties(task) as properties, COLLECT(elementId(children)) as children, COLLECT(elementId(parents)) as parents, c.at as created",
+    ])
+
+    with DB() as db:
+        #TODO: ignore warning from collecting null parent/children
+        results = db.run(cql, params)
+        tasks = [_merge_task(r) for r in results]
+    return tasks

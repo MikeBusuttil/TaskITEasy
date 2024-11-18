@@ -104,7 +104,7 @@ def update_task():
 def get_tasks():
     #TODO: get user from token instead of URL parameters
     try:
-        return jsonify({"tasks": db.get_tasks(request.args.get("user"))}), 200
+        return jsonify(db.get_tasks(request.args.get("user"))), 200
     except:
         log.stderr(format_exc())
         return '👎', 500

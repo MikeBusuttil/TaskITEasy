@@ -32,14 +32,7 @@ poetry run docker compose -f app.yml up -d
 
 - deploy API
   - create endpoints
-    - update task (/task PATCH)
-      - test all scenarios again before marking this as done
-    - fetch tasks (/task GET)
     - delete task (/task DELETE)
-- deploy DB
-  - create schema
-    * put all users in 1 DB (for now)
-    * ![image](https://github.com/user-attachments/assets/ff9b6bad-6cc6-4eb8-b433-09b1637705e1)
 - deploy UI
   - deploy react app
   - create text UI
@@ -69,6 +62,7 @@ poetry run docker compose -f app.yml up -d
   - in-line images
   - content other than the title
 - keep history of all notes/props/updates
+  - just store everything in the updated relationship
 - integrate with GitHub cards
 - integrate with Jira
 - undo accidental deletion
