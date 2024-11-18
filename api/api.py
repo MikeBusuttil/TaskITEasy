@@ -100,6 +100,30 @@ def update_task():
         log.stderr(format_exc())
         return '👎', 500
 
+@api.route('/task', methods=['DELETE'])
+def delete_task():
+    """
+    request json: {
+        user (ID) *required* TODO: get from token
+        task (ID)
+    }
+    """
+    try:
+        assert('user' in request.json and 'task' in request.json)
+    except:
+        return "malformed request.  Missing 'user' or 'task' in payload", 400
+    
+    try:
+        assert(allowed)
+    except:
+        return "not allowed", 403
+
+    try:
+        return jsonify(db.delete_task(user=request.json['user'], task=request.json['task'])), 200
+    except:
+        log.stderr(format_exc())
+        return '👎', 500
+
 @api.route('/tasks', methods=['GET'])
 def get_tasks():
     #TODO: get user from token instead of URL parameters

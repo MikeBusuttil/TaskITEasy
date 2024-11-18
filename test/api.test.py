@@ -1,4 +1,4 @@
-from requests import post, patch, get
+from requests import post, patch, get, delete
 from datetime import timedelta
 
 # r = post("http://localhost/user", json={"user": "Mike Busuttil"})
@@ -82,5 +82,12 @@ from datetime import timedelta
 # r = patch("http://localhost/task", json=payload)
 # print(r.json())
 
-r = get("http://localhost/tasks?user=4:f33852a2-d3c7-4508-97e4-ba99dfc83aa6:2")
+# r = get("http://localhost/tasks?user=4:f33852a2-d3c7-4508-97e4-ba99dfc83aa6:2")
+# print(r.json())
+
+payload = {
+    "user": "4:f33852a2-d3c7-4508-97e4-ba99dfc83aa6:2",
+    "task": "4:f33852a2-d3c7-4508-97e4-ba99dfc83aa6:4",
+}
+r = delete("http://localhost/task", json=payload)
 print(r.json())

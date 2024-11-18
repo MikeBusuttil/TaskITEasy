@@ -30,22 +30,24 @@ poetry run docker compose -f app.yml up -d
 
 ## MVP
 
-- deploy API
-  - create endpoints
-    - delete task (/task DELETE)
 - deploy UI
   - deploy react app
   - create text UI
+    - style like example UI
     - dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
     - alt+⬆, alt+⬇, alt+⬅, alt+➡
     - ([shift]+)[tab]
     - highlight+[tab]
+    - [CTRL]+z, [CTRL]+y
+    - synchronize with back-end
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
     - dragability
     - color selection
+    - synchronize with text UI & thus back-end (or vice versa)
+- deploy online
 - authentication
 - allow paid users
  
@@ -63,9 +65,12 @@ poetry run docker compose -f app.yml up -d
   - content other than the title
 - keep history of all notes/props/updates
   - just store everything in the updated relationship
+  - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
 - undo accidental deletion
+- multi-user simultaneous editing
+  - subscribe to DB changes
 
 ## Notes
 

@@ -101,6 +101,23 @@ def update_task(task=None, user=None):
     
     return True
 
+def delete_task(task=None, user=None):
+    params = dict(
+        task_id=task,
+        user_id=user,
+    )
+    
+    cql = "\n".join([
+        "MATCH (person:Person)-[]->(org:Organization)-[:owns]->(task:Task)",
+        "WHERE elementId(person) = $user_id",
+        "AND elementId(task) = $task_id",
+        "DETACH DELETE task",
+    ])
+    with DB() as db:
+        db.run(cql, params)
+    
+    return True
+
 def _merge_task(result):
     return dict(
         id=result['id'],
