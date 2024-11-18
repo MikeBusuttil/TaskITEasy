@@ -7,6 +7,8 @@
 - Docker engine
 - poetry
 - poetry-plugin-dotenv plug-in
+- NodeJS
+- npm
 - git
 - Linux (tested on Ubuntu)
 

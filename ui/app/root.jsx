@@ -4,6 +4,10 @@ import {
   Outlet,
   Scripts,
 } from "@remix-run/react";
+import styles from "./tailwind.css?url";
+export const links = () => [
+  { rel: "stylesheet", href: styles },
+];
 
 export default function App() {
   return (
@@ -17,7 +21,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <h1>Hello our world!!👋</h1>
+        <h1 className="text-3xl font-bold underline">Hello our world!!👋</h1>
         <Outlet />
 
         <Scripts />
