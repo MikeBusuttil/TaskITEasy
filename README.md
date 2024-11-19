@@ -65,10 +65,10 @@ npm --prefix ./ui run dev
 
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
+- improve dark mode code quality: https://tailwindcss.com/docs/dark-mode
 - exports to
   - JSON (full)
   - MD (readable)
-- dark mode
 - descriptions can have
   - attached images
   - in-line images
