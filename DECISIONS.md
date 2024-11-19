@@ -1,10 +1,5 @@
 ## decided
 
-- Tailwind for UI.  Get components from places like
-  - https://www.tailwindawesome.com/?order=trending&price=all&query=check&technology=any&type=all
-  - https://tailwindcss.5balloons.info/components/input-box/
-  - https://www.reddit.com/r/tailwindcss/comments/1czvaaz/has_anyone_bought_tailwind_ui_is_it_worth_the/
-  - https://devdojo.com/pines/docs/monaco-editor
 - Dark mode
   - for Miro see 24-May-24 comment here: https://community.miro.com/ideas/dark-mode-night-mode-874?sort=dateline.desc#comments
 - Miro SDK for visual UI.  Example links:
@@ -24,3 +19,10 @@
 - Flask for API
 - docker compose for environment orchestration
 - React using Remix for the view UI
+- Tailwind for UI.  Get components from places like
+  - https://www.tailwindawesome.com/?order=trending&price=all&query=check&technology=any&type=all
+  - https://tailwindcss.5balloons.info/components/input-box/
+  - https://www.reddit.com/r/tailwindcss/comments/1czvaaz/has_anyone_bought_tailwind_ui_is_it_worth_the/
+  - https://devdojo.com/pines/docs/monaco-editor
+  - https://devdojo.com/pines/docs/navigation-menu
+

@@ -44,6 +44,10 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI
+      - tone down the white of the checkbox and text for dark mode
+      - only show x and grip while hovering
+      - show border/dividers while editing
+      - allow editing
     - dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
     - alt+⬆, alt+⬇, alt+⬅, alt+➡
@@ -60,7 +64,7 @@ npm --prefix ./ui run dev
 - deploy online
 - authentication
 - allow paid users
- 
+
 ## Future
 
 - copy-pasting from notepad
