@@ -15,6 +15,14 @@ import Moon from "./moon.svg"
 import Grip from "./grip.svg"
 import Clear from "./clear.svg"
 import { useState } from "react"
+import { ClientOnly } from 'remix-utils/client-only'
+import NoSSR from './.client/editor.client'
+
+let tasks = [
+  {id: 0, text: "sup dude"},
+  {id: 1, text: "hey fam"},
+  {id: 2, text: "what is cracking in the hood?"},
+]
 
 const IconHover = ({children, dark, onClick=() => null}) => {
   return (
@@ -55,8 +63,8 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className={dark ? "bg-black" : "bg-white"}>
-        <div className={`flex flex-row h-12 w-full border-b ${ dark ? "border-gray-700" : "border-gray-200"}`}>
+      <body>
+        <div className={`flex flex-row h-12 w-full border-b ${ dark ? "border-gray-700 bg-black" : "border-gray-200"}`}>
           <IconHover dark={dark}>
             <Menu className="h-full p-2 fill-gray-500" />
           </IconHover>
@@ -66,15 +74,18 @@ export default function App() {
               <IconHover onClick={() => setDark(!dark)} dark={dark}><Sun className="h-full p-2 fill-gray-500" /></IconHover>
             }
             <IconHover dark={dark}>
-              <User className="h-full p-2 fill-gray-500" />
+              <User className="h-full p-2 fill-gray-500" onClick={() => console.log(document)} />
             </IconHover>
         </div>
         
-        <div className={`flex flex-col mt-4 p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700" : "border-gray-300"} w-1/2 mx-auto`}>
-          <Task dark={dark} text="sup dude" />
-          <Task dark={dark} text="hey fam" />
-          <Task dark={dark} text="what is cracking in the hood?" />
+        <div className={`w-full pt-3 ${ dark ? "bg-black" : ""}`}>
+          <div className={`flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-black" : "border-gray-300"} w-1/2 mx-auto`}>
+            {tasks.map((t) => <Task dark={dark} text={t.text} key={t.id} />)}
+          </div>
         </div>
+
+        <ClientOnly fallback={<p>Loading...</p>}>{() => <NoSSR tasks={tasks} dark={dark} />}</ClientOnly>
+        
         <Outlet />
 
         <Scripts />

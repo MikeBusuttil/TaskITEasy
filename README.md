@@ -52,9 +52,13 @@ npm --prefix ./ui run dev
           - https://github.com/react-monaco-editor/react-monaco-editor?tab=readme-ov-file
           - https://github.com/Microsoft/monaco-editor
           - how do I replace 4 spaces at the beginning of a line with the grip & checkbox
+            - floating content widget: https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-listening-to-mouse-events
+            - current cursor position: https://stackoverflow.com/questions/78810629/why-is-there-no-way-to-get-the-cursor-position-in-monaco-editor
+            - auto-resize the canvas: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
           - how do I use any font?
           - does browser spell checker work?
         - look into modifying the ITFlow editor: https://github.com/itflow-org/itflow
+        - look into modifying Ace Editor
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
