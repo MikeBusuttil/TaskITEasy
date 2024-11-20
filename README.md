@@ -44,16 +44,24 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI
-      - allow editing
-      - tone down the white of the checkbox and text for dark mode
       - show border/dividers while editing
       - responsive: phones -> desktop
       - scroll big lists nicely
+      - allow editing
+        - do a deep dive into modifying the Monaco Editor:
+          - https://github.com/react-monaco-editor/react-monaco-editor?tab=readme-ov-file
+          - https://github.com/Microsoft/monaco-editor
+          - how do I replace 4 spaces at the beginning of a line with the grip & checkbox
+          - how do I use any font?
+          - does browser spell checker work?
+        - look into modifying the ITFlow editor: https://github.com/itflow-org/itflow
       - code clean-up
         - break into files & organize into folders
+        - checkbox class code
         - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
     - dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
+      - increase item width while dragging
     - alt+⬆, alt+⬇, alt+⬅, alt+➡
     - multi-row highlighting
     - multi-row ([shift]+)[tab]
@@ -88,6 +96,7 @@ npm --prefix ./ui run dev
   - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
+- hover effects for check box (dark & light)
 - undo accidental deletion
 - multi-user simultaneous editing
   - subscribe to DB changes

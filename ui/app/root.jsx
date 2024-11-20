@@ -26,8 +26,8 @@ const Task = ({text, dark}) => {
   return (
     <div className="flex flex-row pb-1 group">
       <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible" />
-      <input type="checkbox" className="mr-2" />
-      <p className={dark ? "text-white" : ""}>{text}</p>
+      <input type="checkbox" />
+      <p className={dark ? "text-gray-400" : ""}>{text}</p>
       <div className="flex-grow"></div>
 
       <button className={[
