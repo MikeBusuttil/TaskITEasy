@@ -44,15 +44,22 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI
-      - tone down the white of the checkbox and text for dark mode
-      - only show x and grip while hovering
-      - show border/dividers while editing
       - allow editing
+      - tone down the white of the checkbox and text for dark mode
+      - show border/dividers while editing
+      - responsive: phones -> desktop
+      - scroll big lists nicely
+      - code clean-up
+        - break into files & organize into folders
+        - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
     - dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
     - alt+⬆, alt+⬇, alt+⬅, alt+➡
-    - ([shift]+)[tab]
-    - highlight+[tab]
+    - multi-row highlighting
+    - multi-row ([shift]+)[tab]
+      - ([shift]+)[tab]
+    - multi-row highlight+[tab]
+      - highlight+[tab]
     - [CTRL]+z, [CTRL]+y
     - synchronize with back-end
   - create visual diagram UI
@@ -69,7 +76,6 @@ npm --prefix ./ui run dev
 
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
-- improve dark mode code quality: https://tailwindcss.com/docs/dark-mode
 - exports to
   - JSON (full)
   - MD (readable)

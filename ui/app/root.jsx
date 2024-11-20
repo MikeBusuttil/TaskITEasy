@@ -24,13 +24,17 @@ const IconHover = ({children, dark, onClick=() => null}) => {
 
 const Task = ({text, dark}) => {
   return (
-    <div className="flex flex-row pb-1">
-      <Grip className="fill-gray-500 hover:cursor-move h-6" />
+    <div className="flex flex-row pb-1 group">
+      <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible" />
       <input type="checkbox" className="mr-2" />
       <p className={dark ? "text-white" : ""}>{text}</p>
       <div className="flex-grow"></div>
 
-      <button className={`object-cover rounded-full focus:outline-none ${ dark ? "hover:bg-gray-800 focus:bg-gray-800" : "hover:bg-gray-200 focus:bg-gray-200"}`}>
+      <button className={[
+        "object-cover rounded-full focus:outline-none",
+        dark ? "hover:bg-gray-800 focus:bg-gray-800" : "hover:bg-gray-200 focus:bg-gray-200",
+        "invisible group-hover:visible",
+      ].join(" ")}>
         <Clear className="fill-gray-500 h-6 p-1"/>
       </button>
       
@@ -39,7 +43,7 @@ const Task = ({text, dark}) => {
 }
 
 export default function App() {
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(true)
 
   return (
     <html>
