@@ -43,37 +43,38 @@ npm --prefix ./ui run dev
 
 - deploy UI
   - create text UI
-    - style like example UI
+    - style like example UI:
+      - 16 leading spaces move the grip & checkbox accordingly
+      - A new line should add a new checkbox
+      - adopt monaco dark color scheme everywhere
+      - fit into a cute bordered card
+        - putting the grip & checkbox into the Glyph area might help: https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IGlyphMarginWidget.html#getDomNode
       - show border/dividers while editing
+      - increase line size
+      - add delete button
       - responsive: phones -> desktop
       - scroll big lists nicely
-      - allow editing
-        - do a deep dive into modifying the Monaco Editor:
-          - https://github.com/react-monaco-editor/react-monaco-editor?tab=readme-ov-file
-          - https://github.com/Microsoft/monaco-editor
-          - how do I replace 4 spaces at the beginning of a line with the grip & checkbox
-            - floating content widget: https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-listening-to-mouse-events
-            - current cursor position: https://stackoverflow.com/questions/78810629/why-is-there-no-way-to-get-the-cursor-position-in-monaco-editor
-            - auto-resize the canvas: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
-          - how do I use any font?
-          - does browser spell checker work?
-        - look into modifying the ITFlow editor: https://github.com/itflow-org/itflow
-        - look into modifying Ace Editor
+      - resize the editor to fit into a bordered card
+      - turn on spell checking
+      - checkbox hover effect & cursor
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
         - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
-    - dragability
+      - give back:
+        - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
+        - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
+    - allow dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
       - increase item width while dragging
-    - alt+⬆, alt+⬇, alt+⬅, alt+➡
-    - multi-row highlighting
-    - multi-row ([shift]+)[tab]
-      - ([shift]+)[tab]
-    - multi-row highlight+[tab]
-      - highlight+[tab]
-    - [CTRL]+z, [CTRL]+y
+    - deal with the 8 spaces at the beginning of the line
+      - don't allow the cursor to go there with arrow keys
+      - don't allow the cursor to go there with the mouse (make the grip & checkbox div bigger)
     - synchronize with back-end
+    - checking box should do something
+      - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
+    - pressing the delete button should wipe the line
+      - and CTRL+Z should bring it back
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
@@ -88,6 +89,7 @@ npm --prefix ./ui run dev
 
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
+- change font (to non-monospace)
 - exports to
   - JSON (full)
   - MD (readable)
@@ -104,6 +106,8 @@ npm --prefix ./ui run dev
 - undo accidental deletion
 - multi-user simultaneous editing
   - subscribe to DB changes
+- alt+⬅, alt+➡
+- last line should replace the checkbox with a + and insert a placeholder "List item"
 
 ## Notes
 

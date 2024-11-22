@@ -25,4 +25,8 @@
   - https://www.reddit.com/r/tailwindcss/comments/1czvaaz/has_anyone_bought_tailwind_ui_is_it_worth_the/
   - https://devdojo.com/pines/docs/monaco-editor
   - https://devdojo.com/pines/docs/navigation-menu
-
+- Use Monaco editor with tips from:
+  - https://github.com/react-monaco-editor/react-monaco-editor?tab=readme-ov-file
+  - https://github.com/Microsoft/monaco-editor
+  - playground: https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-listening-to-mouse-events
+  - auto-resize the canvas: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable

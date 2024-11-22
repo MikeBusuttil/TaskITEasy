@@ -1,51 +1,79 @@
 
 import Editor from '@monaco-editor/react'
-import { useState, useRef, useEffect } from "react"
-// import Grip from "../grip.svg"
+import { useRef } from "react"
+const innerHTML = (await import("./inner.html?raw")).default
 
-var contentWidget = {
+var contentWidget = (lineNumber) => ({
 	domNode: (function () {
-		var domNode = document.createElement("div");
-		domNode.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z" /></svg>';
-		// domNode.style.background = "grey";
-		domNode.style.width = "20px";
+		var domNode = document.createElement("div")
+		domNode.innerHTML = innerHTML
+    domNode.id = `grab-and-check-${lineNumber}`
+    domNode.classList.add("top-[20px]", "relative", "z-90")
+    domNode.onmousemove = () => {
+      const id = `grab-and-check-${lineNumber}`
+      let otherIds = new Set(["grab-and-check-1", "grab-and-check-2", "grab-and-check-3"])
+      otherIds.delete(id)
+      console.log("onmousemove - " + id)
+      document.getElementById(id)?.getElementsByTagName('svg')[0].classList.remove('invisible')
+      for (const otherId of otherIds) {
+        document.getElementById(otherId)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      }
+    }
 		return domNode;
 	})(),
 	getId: function () {
-		return "my.content.widget";
+		return `grab-and-check${lineNumber}`
 	},
 	getDomNode: function () {
-		return this.domNode;
+		return this.domNode
 	},
 	getPosition: function () {
 		return {
 			position: {
-				lineNumber: 2,
+				lineNumber,
 				column: 1,
 			},
 			preference: [
-				// monaco.editor.ContentWidgetPositionPreference.ABOVE,
-				monaco.editor.ContentWidgetPositionPreference.BELOW,
+				monaco.editor.ContentWidgetPositionPreference.EXACT,
 			],
 		};
 	},
-}
+})
 
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)
   function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
-    console.log(monaco?.editor?.ContentWidgetPositionPreference?.BELOW)
-    editor?.addContentWidget(contentWidget)
-    // let x = <ClientOnly fallback={<p>Loading...</p>}><div>sup fam</div></ClientOnly>
+    for (const lineNumber of [1, 2, 3]) {
+      editor?.addContentWidget(contentWidget(lineNumber))
+    }
+
+    editor.onMouseMove(function (e) {
+      const lineNumber = e.target.position?.lineNumber
+      if (!lineNumber) return
+      let otherLines = new Set([1,2,3])
+      otherLines.delete(lineNumber)
+      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
+      for (const line of otherLines) {
+        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      }
+    })
+    editor.onMouseLeave(function () {
+      for (const line of [1,2,3]) {
+        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      }
+    })
   }
 
   return <Editor
     height="90vh"
     theme={dark ? "vs-dark" : "light"}
-    defaultLanguage="javascript"
-    defaultValue={tasks.map((t) => `    ${t.text}`).join("\n") + "\n"}
+    defaultValue={tasks.map((t) => `        ${t.text}`).join("\n") + "\n"}
     onMount={handleEditorDidMount}
+    options={{
+      lineNumbers:() => null,
+      glyphMargin: false,
+    }}
   />
 }
 
