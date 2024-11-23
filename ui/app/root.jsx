@@ -34,7 +34,7 @@ const Task = ({text, dark}) => {
   return (
     <div className="flex flex-row pb-1 group">
       <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible" />
-      <input type="checkbox" />
+      <input type="checkbox" className="mr-2" />
       <p className={dark ? "text-gray-400" : ""}>{text}</p>
       <div className="flex-grow"></div>
 
@@ -63,7 +63,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className={`h-screen ${ dark ? "bg-black" : ""}`}>
         <div className={`flex flex-row h-12 w-full border-b ${ dark ? "border-gray-700 bg-black" : "border-gray-200"}`}>
           <IconHover dark={dark}>
             <Menu className="h-full p-2 fill-gray-500" />
@@ -84,7 +84,9 @@ export default function App() {
           </div>
         </div>
 
-        <ClientOnly fallback={<p>Loading...</p>}>{() => <NoSSR tasks={tasks} dark={dark} />}</ClientOnly>
+        <div className={`w-full pt-3 ${ dark ? "bg-black" : ""}`}>
+          <ClientOnly fallback={<p>Loading...</p>}>{() => <NoSSR tasks={tasks} dark={dark} />}</ClientOnly>
+        </div>
         
         <Outlet />
 

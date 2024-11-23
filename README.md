@@ -44,17 +44,14 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - 16 leading spaces move the grip & checkbox accordingly
-      - A new line should add a new checkbox
       - adopt monaco dark color scheme everywhere
-      - fit into a cute bordered card
       - show border/dividers while editing
-      - increase line size
       - add delete button
       - responsive: phones -> desktop
-      - scroll big lists nicely
-      - resize the editor to fit into a bordered card
-      - turn on spell checking
+      - turn on spell check
+      - get rid of duplicate word suggestions
+      - hide collapse chevrons
+      - hide vertical tab lines
       - checkbox hover effect
       - code clean-up
         - break into files & organize into folders
@@ -66,14 +63,14 @@ npm --prefix ./ui run dev
     - allow dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
       - increase item width while dragging
-    - deal with the 8 spaces at the beginning of the line
-      - don't allow the cursor to go there with arrow keys
-      - don't allow the cursor to go there with the mouse (make the grip & checkbox div bigger)
     - synchronize with back-end
     - checking box should do something
       - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
     - pressing the delete button should wipe the line
       - and CTRL+Z should bring it back
+    - handle the last line properly
+      - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
+      - when last x lines are only indentations, delete x-1 lines
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
@@ -89,6 +86,8 @@ npm --prefix ./ui run dev
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
+- allow collapsing with the chevron
+- only scroll when contents are bigger than text area
 - exports to
   - JSON (full)
   - MD (readable)
