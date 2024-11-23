@@ -1,39 +1,7 @@
 
 import Editor from '@monaco-editor/react'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
-const innerHTML = (await import("./inner.html?raw")).default
 import Grip from "../grip.svg"
-
-var contentWidget = (lineNumber, monaco) => ({
-	domNode: (function () {
-		var domNode = document.createElement("div")
-		domNode.innerHTML = innerHTML
-    domNode.id = `grab-and-check-${lineNumber}`
-    domNode.onmousemove = () => {
-      const id = `grab-and-check-${lineNumber}`
-      let otherIds = new Set(["grab-and-check-1", "grab-and-check-2", "grab-and-check-3"])
-      otherIds.delete(id)
-      document.getElementById(id)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-      for (const otherId of otherIds) {
-        document.getElementById(otherId)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      }
-    }
-		return domNode;
-	})(),
-	getId: function () {
-		return `grab-and-check${lineNumber}`
-	},
-	getDomNode: function () {
-		return this.domNode
-	},
-	getPosition: function () {
-		return {
-      lane: monaco.editor.GlyphMarginLane.Right,
-      range: monaco.Range.fromPositions(new monaco.Position(lineNumber, 1)),
-      zIndex: 1,
-		}
-	},
-})
 
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)

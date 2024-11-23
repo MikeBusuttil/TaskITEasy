@@ -44,6 +44,10 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
+      - disallow clicking the indented area
+        - opaque checkbox background should do it
+      - disallow moving the cursor to the indented area
+        - snap cursor to end of previous line or end of indentation in next line (depending on how you got there)
       - adopt monaco dark color scheme everywhere
       - show border/dividers while editing
       - add delete button
@@ -86,6 +90,7 @@ npm --prefix ./ui run dev
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
+- when multi-line indenting, don't add leading spaces to lines that are at their max indentation
 - allow collapsing with the chevron
 - only scroll when contents are bigger than text area
 - exports to
