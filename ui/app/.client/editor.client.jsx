@@ -1,14 +1,13 @@
 
 import Editor from '@monaco-editor/react'
-import { useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 const innerHTML = (await import("./inner.html?raw")).default
 
-var contentWidget = (lineNumber) => ({
+var contentWidget = (lineNumber, monaco) => ({
 	domNode: (function () {
 		var domNode = document.createElement("div")
 		domNode.innerHTML = innerHTML
     domNode.id = `grab-and-check-${lineNumber}`
-    domNode.classList.add("top-[20px]", "relative", "z-90")
     domNode.onmousemove = () => {
       const id = `grab-and-check-${lineNumber}`
       let otherIds = new Set(["grab-and-check-1", "grab-and-check-2", "grab-and-check-3"])
@@ -29,23 +28,31 @@ var contentWidget = (lineNumber) => ({
 	},
 	getPosition: function () {
 		return {
-			position: {
-				lineNumber,
-				column: 1,
-			},
-			preference: [
-				monaco.editor.ContentWidgetPositionPreference.EXACT,
-			],
-		};
+      lane: monaco.editor.GlyphMarginLane.Right,
+      range: monaco.Range.fromPositions(new monaco.Position(lineNumber, 1)),
+      zIndex: 1,
+		}
 	},
 })
 
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)
+
+  const [code, setCode] = useState("")
+
+  useEffect(() => {
+    console.log("ummmm code?", code)
+  }, [code])
+
+  const onChange = useCallback((newValue, event) => {
+    console.log("event", event, "casued the new value of the code:")
+    console.log(newValue)
+  }, [])
+
   function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
     for (const lineNumber of [1, 2, 3]) {
-      editor?.addContentWidget(contentWidget(lineNumber))
+      editor?.addGlyphMarginWidget(contentWidget(lineNumber, monaco))
     }
 
     editor.onMouseMove(function (e) {
@@ -68,11 +75,13 @@ const NoSSR = ({ tasks, dark }) => {
   return <Editor
     height="90vh"
     theme={dark ? "vs-dark" : "light"}
-    defaultValue={tasks.map((t) => `        ${t.text}`).join("\n") + "\n"}
+    defaultValue={tasks.map((t) => t.text).join("\n") + "\n"}
     onMount={handleEditorDidMount}
+    value={code}
+    onChange={onChange}
     options={{
       lineNumbers:() => null,
-      glyphMargin: false,
+      glyphMargin: true,
     }}
   />
 }

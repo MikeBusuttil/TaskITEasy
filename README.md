@@ -48,7 +48,6 @@ npm --prefix ./ui run dev
       - A new line should add a new checkbox
       - adopt monaco dark color scheme everywhere
       - fit into a cute bordered card
-        - putting the grip & checkbox into the Glyph area might help: https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IGlyphMarginWidget.html#getDomNode
       - show border/dividers while editing
       - increase line size
       - add delete button
@@ -56,7 +55,7 @@ npm --prefix ./ui run dev
       - scroll big lists nicely
       - resize the editor to fit into a bordered card
       - turn on spell checking
-      - checkbox hover effect & cursor
+      - checkbox hover effect
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
