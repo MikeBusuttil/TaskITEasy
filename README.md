@@ -44,19 +44,16 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - disallow clicking the indented area
-        - opaque checkbox background should do it
-      - disallow moving the cursor to the indented area
-        - snap cursor to end of previous line or end of indentation in next line (depending on how you got there)
-      - adopt monaco dark color scheme everywhere
-      - show border/dividers while editing
-      - add delete button
+      - fix jankyness when
+        - holding the mouse down to highlight in the indentation
+        - highlighting lines 2-4, with cursor in 1st position, then pressing tab.  The cursor snaps & highlight is lost
+          - listen for the "mouse" property with the cursor change
+      - when a parent is de-indented, all children that get de-indented too should loose their leading spaces
+      - hide collapse chevrons
+      - checkbox hover effect
       - responsive: phones -> desktop
       - turn on spell check
       - get rid of duplicate word suggestions
-      - hide collapse chevrons
-      - hide vertical tab lines
-      - checkbox hover effect
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
@@ -67,14 +64,12 @@ npm --prefix ./ui run dev
     - allow dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop
       - increase item width while dragging
-    - synchronize with back-end
-    - checking box should do something
-      - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
-    - pressing the delete button should wipe the line
-      - and CTRL+Z should bring it back
     - handle the last line properly
       - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
       - when last x lines are only indentations, delete x-1 lines
+    - synchronize with back-end
+    - checking box should do something
+      - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
@@ -107,6 +102,9 @@ npm --prefix ./ui run dev
 - integrate with Jira
 - hover effects for check box (dark & light)
 - undo accidental deletion
+- disallow clicking the indented area by not listening to click events there & hiding "I" cursor
+- draw row-highlighting top & bottom borders across the entire editor card
+- MS-word-like cursor positioning when pressing the down arrow on the first column
 - multi-user simultaneous editing
   - subscribe to DB changes
 - alt+⬅, alt+➡

@@ -63,8 +63,8 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className={`h-screen ${ dark ? "bg-black" : ""}`}>
-        <div className={`flex flex-row h-12 w-full border-b ${ dark ? "border-gray-700 bg-black" : "border-gray-200"}`}>
+      <body className={`h-screen ${ dark ? "bg-[#1e1e1e]" : ""}`}>
+        <div className={`flex flex-row h-12 w-full border-b ${ dark ? "border-gray-700 bg-[#1e1e1e]" : "border-gray-200"}`}>
           <IconHover dark={dark}>
             <Menu className="h-full p-2 fill-gray-500" />
           </IconHover>
@@ -77,14 +77,8 @@ export default function App() {
               <User className="h-full p-2 fill-gray-500" onClick={() => console.log(document)} />
             </IconHover>
         </div>
-        
-        <div className={`w-full pt-3 ${ dark ? "bg-black" : ""}`}>
-          <div className={`flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-black" : "border-gray-300"} w-1/2 mx-auto`}>
-            {tasks.map((t) => <Task dark={dark} text={t.text} key={t.id} />)}
-          </div>
-        </div>
 
-        <div className={`w-full pt-3 ${ dark ? "bg-black" : ""}`}>
+        <div className={`w-full pt-8 ${ dark ? "bg-[#1e1e1e]" : ""}`}>
           <ClientOnly fallback={<p>Loading...</p>}>{() => <NoSSR tasks={tasks} dark={dark} />}</ClientOnly>
         </div>
         
