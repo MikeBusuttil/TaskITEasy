@@ -44,8 +44,6 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - hide collapse chevrons
-      - checkbox hover effect
       - responsive: phones -> desktop
       - allow dragability
         * use https://github.com/atlassian/pragmatic-drag-and-drop
@@ -98,9 +96,13 @@ npm --prefix ./ui run dev
   - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
-- implement custom code folding chevrons:
-  - place them next to grip on hover
-  - tell Monaco edit which lines to fold: https://stackoverflow.com/a/64430787/2363056
+- implement folding/collapsing by considering the 2 options:
+  - custom code folding chevrons:
+    - place them next to grip on hover
+    - tell Monaco edit which lines to fold: https://stackoverflow.com/a/64430787/2363056
+  - leverage Monaco's built-in folding by relying on that undocumented API.  To use this method we could:
+    - keep track of which lines have chevrons and which chevrons have been toggled
+    - listen to the DOM for which rows are visible
 - better target the margin width (for indentation folding) with Monaco API instead of CSS hack
   - API https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft
 - allow shift-selecting with left & right arrows into indents

@@ -17,6 +17,9 @@ input[type="checkbox"] {
     width: 14px;
     height: 14px;
 }
+input[type="checkbox"]:hover {
+    border: 0.1rem solid #d4d4d4;
+}
 
 input[type="checkbox"]::before {
     content: "";
@@ -26,14 +29,12 @@ input[type="checkbox"]::before {
     transform: scale(0);
     background-color: #6b7280;
 }
-
+input[type="checkbox"]:hover::before {
+    background-color: #d4d4d4;
+}
 input[type="checkbox"]:checked::before {
     transform: scale(1);
 }
-
-/* input[type="checkbox"]:hover {
-    color: black;
-} */
 
 /* TODO: replace this hack with https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft */
 .overflow-guard > div:nth-child(2) {

@@ -152,7 +152,7 @@ const NoSSR = ({ tasks, dark }) => {
 
   return (
     <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
-      <div className='absolute flex flex-col mt-[2px] w-full overflow-hidden'>
+      <div className='absolute flex flex-col mt-[2px] w-full overflow-hidden h-[298px]'>
         {[...Array(lines).keys()].map((n) => (
           <div
             className="flex flex-row group relative"
@@ -162,7 +162,7 @@ const NoSSR = ({ tasks, dark }) => {
             style={{top: scrollPadding, marginLeft: `${26 + indentations[n]*15}px`}}
           >
             <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible z-10"/>
-            <input type="checkbox" className="cursor-pointer z-10 " />
+            <input type="checkbox" className="cursor-pointer z-10" />
             <div className="flex flex-grow"></div>
             <button className={[
                 "object-cover rounded-full focus:outline-none z-10 mr-28",
