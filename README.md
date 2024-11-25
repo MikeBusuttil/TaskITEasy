@@ -44,7 +44,8 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - hide collapse chevrons
+      - when folding/collapsing, hide checkboxes for collapsed lines
+        - easiest way might be to go back to rendering the checkbox inline instead of floating above
       - checkbox hover effect
       - responsive: phones -> desktop
       - allow dragability

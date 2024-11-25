@@ -33,6 +33,7 @@ const NoSSR = ({ tasks, dark }) => {
     })
     return indentations
   },[text])
+  const stringifiedIndentations = useMemo(() => indentations.join(","),[indentations])
   const disallowedCursorPositions = useMemo(() => {
     let disallowed = new Set()
     indentations.map((indentation, index) => {
@@ -43,6 +44,22 @@ const NoSSR = ({ tasks, dark }) => {
     })
     return disallowed
   },[indentations])
+  const folderChevrons = useMemo(() => {
+    const indentations = stringifiedIndentations.split(",").map(x => Number(x))
+    let output = indentations.map((indentationLevel, lineIndex) => {
+      const nextIndentationLevel = indentations[lineIndex + 1]
+      if (nextIndentationLevel > indentationLevel) {
+        return true
+      }
+    })
+    console.log({ folderHasChevron: output})
+    return output
+  }, [stringifiedIndentations])
+  const hideLine = useMemo(() => {
+    let output = indentations.map(x => false)
+    // console.log({ hideLine: output})
+    return output
+  }, [indentations])
 
   useEffect(() => {
     const lineNumbers = [...Array(lines).keys()].map(x => x+1)
@@ -148,6 +165,20 @@ const NoSSR = ({ tasks, dark }) => {
     editor.onDidScrollChange((e)=>setScrollPadding(`${-e.scrollTop - 3}px`))
     editor.onDidChangeCursorPosition(_setCursorPosition)
     console.log("here are all the editor methods for reference:", editor)
+    // editor.onDidChangeDecorations((e) => console.log({decorations: e}))
+    // editor._contributions["editor.contrib.folding"].foldingModel.onDidChange(e => console.log({decorations: e}))
+    // editor.onDidChangeHiddenAreas((e, a, b) => console.log(e, a, b))
+    const registerOnDidChangeFolding = () => {
+      const foldingContrib = editor.getContribution('editor.contrib.folding');
+      foldingContrib?.getFoldingModel().then(foldingModel => {
+        foldingModel.onDidChange((e) => {
+          if (!e.collapseStateChanged) return
+          console.log("the following collapser was toggled", e.collapseStateChanged[0].index)
+        });
+      });
+    };
+    registerOnDidChangeFolding();
+    editor.onDidChangeModel(registerOnDidChangeFolding);
   }
 
   return (
@@ -155,7 +186,7 @@ const NoSSR = ({ tasks, dark }) => {
       <div className='absolute flex flex-col mt-[2px] w-full overflow-hidden'>
         {[...Array(lines).keys()].map((n) => (
           <div
-            className="flex flex-row group relative"
+            className={`flex flex-row group relative ${ hideLine[n] ? "hidden" : ""}`}
             key={n+1}
             id={`grab-and-check-${n+1}`}
             onMouseMove={() => onmousemove(n+1)}
@@ -190,7 +221,6 @@ const NoSSR = ({ tasks, dark }) => {
           glyphMargin: false,
           tabSize: 2,
           guides: {indentation: false},
-          folding: false,
         }}
       />
     </div>
