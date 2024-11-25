@@ -1,12 +1,11 @@
 
 import Editor from '@monaco-editor/react'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
-import Grip from "../grip.svg"
-import Clear from "../clear.svg"
+const gripSvg = (await import("../grip.svg?raw")).default
+const clearSvg = (await import("../clear.svg?raw")).default
 
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)
-  const [scrollPadding, setScrollPadding] = useState("3px")
   // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
   const [text, setText] = useState(`sup dude
   hey fam
@@ -33,6 +32,7 @@ const NoSSR = ({ tasks, dark }) => {
     })
     return indentations
   },[text])
+  const stringifiedIndentations = useMemo(() => JSON.stringify(indentations), [indentations])
   const disallowedCursorPositions = useMemo(() => {
     let disallowed = new Set()
     indentations.map((indentation, index) => {
@@ -44,33 +44,16 @@ const NoSSR = ({ tasks, dark }) => {
     return disallowed
   },[indentations])
 
-  useEffect(() => {
-    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
-    editorRef.current?.onMouseMove(function (e) {
-      const lineNumber = e.target.position?.lineNumber
-      if (!lineNumber) return
-      let otherLines = new Set(lineNumbers)
-      otherLines.delete(lineNumber)
-      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-      for (const line of otherLines) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-    editorRef.current?.onMouseLeave(function () {
-      for (const line of lineNumbers) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-  }, [lines])
-
   const deleteLineAndChildren = useCallback((lineNumber) => {
+    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
     let newText = text.split("\n")
     let deleteLines = 1
+    document.getElementById(`grab-and-check-${lineNumber}`).remove()
+    document.getElementById(`clear-${lineNumber}`).remove()
     for (const indentation of indentations.slice(lineNumber)) {
       if (indentation > indentations[lineNumber - 1]) {
+        document.getElementById(`grab-and-check-${lineNumber + deleteLines}`)?.remove()
+        document.getElementById(`clear-${lineNumber + deleteLines}`)?.remove()
         deleteLines ++
       } else {
         break
@@ -80,24 +63,121 @@ const NoSSR = ({ tasks, dark }) => {
     newText = newText.join("\n")
     _setModelContent(newText)
     setText(newText)
+    editorRef.current.focus()
   }, [text, indentations])
 
   const onmousemove = useCallback((lineNumber) => {
-    const id = `grab-and-check-${lineNumber}`
-    let otherIds = new Set([...Array(lines).keys()].map(x => `grab-and-check-${x+1}`))
-    otherIds.delete(id)
-    document.getElementById(id)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-    document.getElementById(id)?.getElementsByTagName('button')[0].classList.remove('invisible')
-    for (const otherId of otherIds) {
-      document.getElementById(otherId)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      document.getElementById(otherId)?.getElementsByTagName('button')[0].classList.add('invisible')
+    let otherLineNumbers = new Set([...Array(lines).keys()].map(l => l+1))
+    otherLineNumbers.delete(lineNumber)
+    document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
+    document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
+    for (const otherLineNumber of otherLineNumbers) {
+      document.getElementById(`grab-and-check-${otherLineNumber}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      document.getElementById(`clear-${otherLineNumber}`)?.getElementsByTagName('button')[0].classList.add('invisible')
     }
   }, [lines])
 
-  const onChange = useCallback((newValue, event) => {
-    // console.log("event", event, "caused the new value of the code:")
-    setText(newValue)
-  }, [])
+  var taskActionsLeft = (lineNumber, indentation) => ({
+    domNode: (function () {
+      var domNode = document.createElement("div")
+      domNode.id = `grab-and-check-${lineNumber}`
+      domNode.classList.add("task-action")
+      domNode.onmousemove = () => onmousemove(lineNumber)
+      
+      var innerContainer = document.createElement("div")
+      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "relative")
+      innerContainer.style = `left: ${indentation*16}px`
+      domNode.appendChild(innerContainer)
+
+      innerContainer.insertAdjacentHTML('beforeend', gripSvg)
+      innerContainer.children[0].classList.add("fill-gray-500", "hover:cursor-move", "h-6", "invisible", "group-hover:visible", "z-10")
+            
+      var checkbox = document.createElement("input")
+      checkbox.type="checkbox"
+      checkbox.classList.add("cursor-pointer", "z-10")
+      innerContainer.appendChild(checkbox)
+
+      return domNode;
+    })(),
+    getId: () => `task-action-left${lineNumber}`,
+    getDomNode: function () { return this.domNode },
+    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+  })
+  var taskActionsRight = (lineNumber) => ({
+    domNode: (function () {
+      var domNode = document.createElement("div")
+      domNode.id = `clear-${lineNumber}`
+      domNode.classList.add("task-action")
+      domNode.onmousemove = () => onmousemove(lineNumber)
+      
+      var innerContainer = document.createElement("div")
+      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[670px]", "relative")
+      domNode.appendChild(innerContainer)
+
+      var button = document.createElement("button")
+      button.classList.add(
+        "hover:bg-gray-800", "focus:bg-gray-800", //TODO: dark mode
+        "object-cover", "rounded-full", "focus:outline-none", "z-10", "invisible", "group-hover:visible"
+      )
+      button.onclick = () => deleteLineAndChildren(lineNumber)
+      innerContainer.appendChild(button)
+   
+      button.insertAdjacentHTML('beforeend', clearSvg)
+      button.children[0].classList.add("fill-gray-500", "h-6", "p-1", "z-10")
+
+      return domNode;
+    })(),
+    getId: () => `task-action-right${lineNumber}`,
+    getDomNode: function () { return this.domNode },
+    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+  })
+
+  const initializeActionButtons = useCallback((editor) => {
+    console.log("initializing!")
+    //TODO: use Monaco API to replace widget ID so the console doesn't complain
+    for (const lineNumber of [...Array(lines).keys()].map(l => l+1)) {
+      document.getElementById(`grab-and-check-${lineNumber}`)?.remove()
+      document.getElementById(`clear-${lineNumber}`)?.remove()
+      editor.addContentWidget(taskActionsLeft(lineNumber, indentations[lineNumber-1]))
+      editor.addContentWidget(taskActionsRight(lineNumber))
+    }
+    
+    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
+    editor.onMouseMove(function (e) {
+      const lineNumber = e.target.position?.lineNumber
+      if (!lineNumber) return
+      let otherLines = new Set(lineNumbers)
+      otherLines.delete(lineNumber)
+      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
+      document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
+      for (const line of otherLines) {
+        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+        document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
+      }
+    })
+    editor.onMouseLeave(function () {
+      for (const line of lineNumbers) {
+        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+        document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
+      }
+    })
+  }, [lines])
+
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+    initializeActionButtons(editor)
+  }, [lines])
+
+  useEffect(() => {
+    const indentations = JSON.parse(stringifiedIndentations)
+    indentations.map((indentation, index) => {
+      const lineNumber = index + 1
+      if (document.getElementById(`grab-and-check-${lineNumber}`)) {
+        document.getElementById(`grab-and-check-${lineNumber}`).children[0].style = `left: ${indentation*16}px`
+      }
+    })
+  }, [stringifiedIndentations])
 
   const ignoredCursorSources = new Set(["api", "tab", "outdent", "mouse"])
   const lineLength = useCallback((lineNumber) => text.split("\n")[lineNumber - 1].length, [text])
@@ -123,65 +203,21 @@ const NoSSR = ({ tasks, dark }) => {
     setPreviousCursorLine(nextLineNumber)
   }, [disallowedCursorPositions, cursorPosition, previousCursorLine, lineLength, indentationLength])
 
-  function handleEditorDidMount(editor, monaco) {
+  function handleEditorDidMount(editor) {
     editorRef.current = editor
-
-    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
-    editor.onMouseMove(function (e) {
-      const lineNumber = e.target.position?.lineNumber
-      if (!lineNumber) return
-      let otherLines = new Set(lineNumbers)
-      otherLines.delete(lineNumber)
-      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-      for (const line of otherLines) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-    editor.onMouseLeave(function () {
-      for (const line of lineNumbers) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-    editor.onDidScrollChange((e)=>setScrollPadding(`${-e.scrollTop - 3}px`))
+    initializeActionButtons(editor)
     editor.onDidChangeCursorPosition(_setCursorPosition)
     console.log("here are all the editor methods for reference:", editor)
   }
 
   return (
     <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
-      <div className='absolute flex flex-col mt-[2px] w-full overflow-hidden h-[298px]'>
-        {[...Array(lines).keys()].map((n) => (
-          <div
-            className="flex flex-row group relative"
-            key={n+1}
-            id={`grab-and-check-${n+1}`}
-            onMouseMove={() => onmousemove(n+1)}
-            style={{top: scrollPadding, marginLeft: `${26 + indentations[n]*15}px`}}
-          >
-            <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible z-10"/>
-            <input type="checkbox" className="cursor-pointer z-10" />
-            <div className="flex flex-grow"></div>
-            <button className={[
-                "object-cover rounded-full focus:outline-none z-10 mr-28",
-                dark ? "hover:bg-gray-800 focus:bg-gray-800" : "hover:bg-gray-200 focus:bg-gray-200",
-                "invisible group-hover:visible",
-              ].join(" ")}
-              onClick={() => deleteLineAndChildren(n+1)}
-            >
-              <Clear className="fill-gray-500 h-6 p-1"/>
-            </button>
-          </div>
-          ))}
-      </div>
       <Editor
         height="300px"
         theme={dark ? "vs-dark" : "light"}
         defaultValue={text}
         onMount={handleEditorDidMount}
-        onChange={onChange}
+        onChange={(newText) => setText(newText)}
         value={_modelContent}
         options={{
           // Full list: https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IEditorOptions.html
@@ -190,7 +226,8 @@ const NoSSR = ({ tasks, dark }) => {
           glyphMargin: false,
           tabSize: 2,
           guides: {indentation: false},
-          folding: false,
+          minimap: {enabled: false},
+          folding: true,
         }}
       />
     </div>

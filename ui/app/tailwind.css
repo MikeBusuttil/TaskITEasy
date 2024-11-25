@@ -9,9 +9,8 @@ input[type="checkbox"] {
     flex-direction: column;
     align-content: center;
     justify-content: center;
-    /* font-size: 2rem; */
     margin-top: 6px;
-    /* margin-right: 8px; */
+    margin-right: 8px;
     border: 0.1rem solid #6b7280;
     border-radius: 2px;
     width: 14px;
@@ -37,6 +36,9 @@ input[type="checkbox"]:checked::before {
 }
 
 /* TODO: replace this hack with https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft */
-.overflow-guard > div:nth-child(2) {
-    left: 75px !important;
+.monaco-editor-background {
+    padding-left: 50px;
+}
+.task-action {
+    left: -50px !important;
 }

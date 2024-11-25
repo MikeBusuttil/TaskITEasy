@@ -44,6 +44,10 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
+      - ensure super long lines are handled properly (wrapping)
+        - fix all the breaking changes
+          - time-box using react instead of the trogleditian API's (Remix first, then NextJS)
+        - (try to) move all DOM-generating/web API code to separate files
       - responsive: phones -> desktop
       - allow dragability
         * use https://github.com/atlassian/pragmatic-drag-and-drop
@@ -51,15 +55,11 @@ npm --prefix ./ui run dev
       - handle the last line properly
         - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
         - when last x lines are only indentations, delete x-1 lines
+        - last line should replace the checkbox with a + and insert a placeholder "List item"
       - code clean-up
         - break into files & organize into folders
-        - use React to target those styles instead of the current barbarism
         - checkbox class code
         - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
-      - give back:
-        - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
-        - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
-        - document how you can list all the events with console.log({editor})
     - turn on spell check
     - get rid of duplicate word suggestions
     - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
@@ -73,11 +73,17 @@ npm --prefix ./ui run dev
     - color selection
     - synchronize with text UI & thus back-end (or vice versa)
 - deploy online
+  - re-deploy on push to master
 - authentication
 - allow paid users
 
 ## Future
 
+- give back:
+  - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
+  - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
+  - document how you can list all the events with console.log({editor})
+- use React for the action buttons instead of the current web API barbarism
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
@@ -96,15 +102,12 @@ npm --prefix ./ui run dev
   - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
-- implement folding/collapsing by considering the 2 options:
-  - custom code folding chevrons:
-    - place them next to grip on hover
-    - tell Monaco edit which lines to fold: https://stackoverflow.com/a/64430787/2363056
-  - leverage Monaco's built-in folding by relying on that undocumented API.  To use this method we could:
-    - keep track of which lines have chevrons and which chevrons have been toggled
-    - listen to the DOM for which rows are visible
+- implement custom folding/collapsing:
+  - place them next to grip on hover instead of in the margin
+  - tell Monaco which lines to fold: https://stackoverflow.com/a/64430787/2363056 + https://stackoverflow.com/questions/50148938
 - better target the margin width (for indentation folding) with Monaco API instead of CSS hack
-  - API https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft
+- fix janky highlighting when highlighting text then moving over the left gutter:
+  - maybe [this API](https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft) or the layout API can help
 - allow shift-selecting with left & right arrows into indents
   - ideal solution might be to use MS-word-like cursor positioning wrt indentation
   - hack could involve listening to the press of the shift key 
