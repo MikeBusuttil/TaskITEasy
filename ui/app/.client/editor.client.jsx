@@ -7,7 +7,19 @@ import Clear from "../clear.svg"
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)
   const [scrollPadding, setScrollPadding] = useState("3px")
-  const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
+  // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
+  const [text, setText] = useState(`sup dude
+  hey fam
+    what is cracking in the hood?
+    what you sayin
+  any news
+    from who
+      idk
+        I just work here
+          got Steak hoe
+            Got Beef
+              Grade A hoe, not lean
+            `)
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
@@ -87,23 +99,28 @@ const NoSSR = ({ tasks, dark }) => {
     setText(newValue)
   }, [])
 
+  const ignoredCursorSources = new Set(["api", "tab", "outdent", "mouse"])
   const lineLength = useCallback((lineNumber) => text.split("\n")[lineNumber - 1].length, [text])
   const indentationLength = useCallback((lineNumber) => indentations[lineNumber - 1]*2, [indentations])
   useEffect(() => {
     const currentCursorPosition = `${cursorPosition.position.lineNumber},${cursorPosition.position.column}`
+    let nextLineNumber = cursorPosition.position.lineNumber
     if(disallowedCursorPositions.has(currentCursorPosition)) {
-      editorRef.current?.setPosition(
-        cursorPosition.position.lineNumber === previousCursorLine
-          ? {
-            column: lineLength(cursorPosition.position.lineNumber - 1) + 1,
-            lineNumber: cursorPosition.position.lineNumber - 1,
-          } : {
-            column: indentationLength(cursorPosition.position.lineNumber) + 1,
-            lineNumber: cursorPosition.position.lineNumber
-          }
-      )
+      if (!ignoredCursorSources.has(cursorPosition.source)) {
+        editorRef.current?.setPosition(
+          cursorPosition.position.lineNumber === previousCursorLine
+            ? {
+              column: lineLength(cursorPosition.position.lineNumber - 1) + 1,
+              lineNumber: cursorPosition.position.lineNumber - 1,
+            } : {
+              column: indentationLength(cursorPosition.position.lineNumber) + 1,
+              lineNumber: cursorPosition.position.lineNumber
+            }
+        )
+      }
+      nextLineNumber = cursorPosition.position.lineNumber - (cursorPosition.position.lineNumber === previousCursorLine)
     }
-    setPreviousCursorLine(cursorPosition.position.lineNumber)
+    setPreviousCursorLine(nextLineNumber)
   }, [disallowedCursorPositions, cursorPosition, previousCursorLine, lineLength, indentationLength])
 
   function handleEditorDidMount(editor, monaco) {
@@ -130,6 +147,7 @@ const NoSSR = ({ tasks, dark }) => {
     })
     editor.onDidScrollChange((e)=>setScrollPadding(`${-e.scrollTop - 3}px`))
     editor.onDidChangeCursorPosition(_setCursorPosition)
+    console.log("here are all the editor methods for reference:", editor)
   }
 
   return (
@@ -141,7 +159,7 @@ const NoSSR = ({ tasks, dark }) => {
             key={n+1}
             id={`grab-and-check-${n+1}`}
             onMouseMove={() => onmousemove(n+1)}
-            style={{top: scrollPadding, marginLeft: `${36 + indentations[n]*15}px`}}
+            style={{top: scrollPadding, marginLeft: `${26 + indentations[n]*15}px`}}
           >
             <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible z-10"/>
             <input type="checkbox" className="cursor-pointer z-10 " />
@@ -166,11 +184,13 @@ const NoSSR = ({ tasks, dark }) => {
         onChange={onChange}
         value={_modelContent}
         options={{
-          lineNumbers:() => null,
+          // Full list: https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IEditorOptions.html
+          lineNumbers: "off",
           lineHeight: 1.6787,
-          glyphMargin: true,
+          glyphMargin: false,
           tabSize: 2,
           guides: {indentation: false},
+          folding: false,
         }}
       />
     </div>

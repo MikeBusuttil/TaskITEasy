@@ -44,29 +44,27 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - fix jankyness when
-        - holding the mouse down to highlight in the indentation
-        - highlighting lines 2-4, with cursor in 1st position, then pressing tab.  The cursor snaps & highlight is lost
-          - listen for the "mouse" property with the cursor change
-      - when a parent is de-indented, all children that get de-indented too should loose their leading spaces
       - hide collapse chevrons
       - checkbox hover effect
       - responsive: phones -> desktop
-      - turn on spell check
-      - get rid of duplicate word suggestions
+      - allow dragability
+        * use https://github.com/atlassian/pragmatic-drag-and-drop
+        - increase item width while dragging
+      - handle the last line properly
+        - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
+        - when last x lines are only indentations, delete x-1 lines
       - code clean-up
         - break into files & organize into folders
+        - use React to target those styles instead of the current barbarism
         - checkbox class code
         - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
       - give back:
         - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
         - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
-    - allow dragability
-      * use https://github.com/atlassian/pragmatic-drag-and-drop
-      - increase item width while dragging
-    - handle the last line properly
-      - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
-      - when last x lines are only indentations, delete x-1 lines
+        - document how you can list all the events with console.log({editor})
+    - turn on spell check
+    - get rid of duplicate word suggestions
+    - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
     - synchronize with back-end
     - checking box should do something
       - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
@@ -100,8 +98,14 @@ npm --prefix ./ui run dev
   - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
-- hover effects for check box (dark & light)
-- undo accidental deletion
+- implement custom code folding chevrons:
+  - place them next to grip on hover
+  - tell Monaco edit which lines to fold: https://stackoverflow.com/a/64430787/2363056
+- better target the margin width (for indentation folding) with Monaco API instead of CSS hack
+  - API https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft
+- allow shift-selecting with left & right arrows into indents
+  - ideal solution might be to use MS-word-like cursor positioning wrt indentation
+  - hack could involve listening to the press of the shift key 
 - disallow clicking the indented area by not listening to click events there & hiding "I" cursor
 - draw row-highlighting top & bottom borders across the entire editor card
 - MS-word-like cursor positioning when pressing the down arrow on the first column

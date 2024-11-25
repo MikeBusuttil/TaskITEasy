@@ -34,3 +34,8 @@ input[type="checkbox"]:checked::before {
 /* input[type="checkbox"]:hover {
     color: black;
 } */
+
+/* TODO: replace this hack with https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft */
+.overflow-guard > div:nth-child(2) {
+    left: 75px !important;
+}
