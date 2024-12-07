@@ -44,6 +44,8 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
+      - fix delete button, CTRL +Z, delete button, CTRL +z strange cyclical behavior
+      - wrap long lines
       - ensure super long lines are handled properly (wrapping)
         - fix all the breaking changes
           - time-box using react instead of the trogleditian API's (Remix first, then NextJS)
@@ -118,6 +120,8 @@ npm --prefix ./ui run dev
   - subscribe to DB changes
 - alt+⬅, alt+➡
 - last line should replace the checkbox with a + and insert a placeholder "List item"
+- fix "overwrite content widget" warnings with `editor.removeContentWidget({getId: () =>`task-action-right${lineNumber}`})`
+  - note: this is super tricky since you have to actually target the lines you want to remove, not just the last line
 
 ## Notes
 

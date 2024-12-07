@@ -1,8 +1,118 @@
 
 import Editor from '@monaco-editor/react'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import { usePureCallback } from "./usePureCallback"
 const gripSvg = (await import("../grip.svg?raw")).default
 const clearSvg = (await import("../clear.svg?raw")).default
+import EventEmitter from "eventemitter2"
+
+class StateManager extends EventEmitter {
+  indentations = []
+  editor = null
+  lines = 0
+  text = ""
+
+  // this.emit("deleteLine", lineNumber)
+
+  _onmousemove (lineNumber) {
+    let otherLineNumbers = new Set([...Array(this.lines).keys()].map(l => l+1))
+    otherLineNumbers.delete(lineNumber)
+    document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
+    document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
+    for (const otherLineNumber of otherLineNumbers) {
+      document.getElementById(`grab-and-check-${otherLineNumber}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      document.getElementById(`clear-${otherLineNumber}`)?.getElementsByTagName('button')[0].classList.add('invisible')
+    }
+  }
+
+  _taskActionsLeft = (lineNumber, indentation, onmousemove) => ({
+    domNode: (function () {
+      var domNode = document.createElement("div")
+      domNode.id = `grab-and-check-${lineNumber}`
+      domNode.classList.add("task-action")
+      domNode.onmousemove = onmousemove
+      
+      var innerContainer = document.createElement("div")
+      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "relative")
+      innerContainer.style = `left: ${indentation*16}px`
+      domNode.appendChild(innerContainer)
+
+      innerContainer.insertAdjacentHTML('beforeend', gripSvg)
+      innerContainer.children[0].classList.add("fill-gray-500", "hover:cursor-move", "h-6", "invisible", "group-hover:visible", "z-10")
+            
+      var checkbox = document.createElement("input")
+      checkbox.type="checkbox"
+      checkbox.classList.add("cursor-pointer", "z-10")
+      innerContainer.appendChild(checkbox)
+
+      return domNode;
+    })(),
+    getId: () => `task-action-left${lineNumber}`,
+    getDomNode: function () { return this.domNode },
+    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+  })
+  _taskActionsRight = (lineNumber, onmousemove, onclick) => ({
+    domNode: (function () {
+      var domNode = document.createElement("div")
+      domNode.id = `clear-${lineNumber}`
+      domNode.classList.add("task-action")
+      domNode.onmousemove = onmousemove
+      
+      var innerContainer = document.createElement("div")
+      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[670px]", "relative")
+      domNode.appendChild(innerContainer)
+
+      var button = document.createElement("button")
+      button.classList.add(
+        "hover:bg-gray-800", "focus:bg-gray-800", //TODO: dark mode
+        "object-cover", "rounded-full", "focus:outline-none", "z-10", "invisible", "group-hover:visible"
+      )
+      button.onclick = onclick
+      innerContainer.appendChild(button)
+   
+      button.insertAdjacentHTML('beforeend', clearSvg)
+      button.children[0].classList.add("fill-gray-500", "h-6", "p-1", "z-10")
+
+      return domNode;
+    })(),
+    getId: () => `task-action-right${lineNumber}`,
+    getDomNode: function () { return this.domNode },
+    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+  })
+
+  addButton(lineNumber) {
+    console.log(lineNumber, this.indentations[lineNumber-1])
+    const onmousemove = () => this._onmousemove(lineNumber)
+    const onclick = () => this.deleteLine(lineNumber)
+    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.indentations[lineNumber-1], onmousemove))
+    this.editor.addContentWidget(this._taskActionsRight(lineNumber, onmousemove, onclick))
+  }
+
+  addButtons() {
+    for (const lineNumber of [...Array(this.lines).keys()].map(l => l+1)) {
+      this.addButton(lineNumber)
+    }
+  }
+
+  deleteLine(lineNumber) {
+    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
+    let newText = this.text.split("\n")
+    let deleteLines = 1
+    for (const indentation of this.indentations.slice(lineNumber)) {
+      if (indentation > this.indentations[lineNumber - 1]) {
+        deleteLines ++
+      } else {
+        break
+      }
+    }
+    newText.splice(lineNumber-1, deleteLines)
+    newText = newText.join("\n")
+    this.emit("text", newText)
+    this.editor.focus()
+  }
+}
+
+const stateManager = new StateManager()
 
 const NoSSR = ({ tasks, dark }) => {
   const editorRef = useRef(null)
@@ -22,6 +132,7 @@ const NoSSR = ({ tasks, dark }) => {
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
+  const [actionButtons, setActionButtons] = useState(0)
   const lines = useMemo(() => (text.match(/\n/g)||[]).length, [text])
   const indentations = useMemo(() => {
     let indentations = [0]
@@ -44,130 +155,51 @@ const NoSSR = ({ tasks, dark }) => {
     return disallowed
   },[indentations])
 
-  const deleteLineAndChildren = useCallback((lineNumber) => {
-    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
-    let newText = text.split("\n")
-    let deleteLines = 1
-    document.getElementById(`grab-and-check-${lineNumber}`).remove()
-    document.getElementById(`clear-${lineNumber}`).remove()
-    for (const indentation of indentations.slice(lineNumber)) {
-      if (indentation > indentations[lineNumber - 1]) {
-        document.getElementById(`grab-and-check-${lineNumber + deleteLines}`)?.remove()
-        document.getElementById(`clear-${lineNumber + deleteLines}`)?.remove()
-        deleteLines ++
-      } else {
-        break
-      }
-    }
-    newText.splice(lineNumber-1, deleteLines)
-    newText = newText.join("\n")
-    _setModelContent(newText)
-    setText(newText)
-    editorRef.current.focus()
-  }, [text, indentations])
+  useEffect(() => {
+    stateManager.indentations = indentations
+    stateManager.text = text
+    stateManager.lines = lines
+  }, [indentations, text, lines])
 
-  const onmousemove = useCallback((lineNumber) => {
-    let otherLineNumbers = new Set([...Array(lines).keys()].map(l => l+1))
-    otherLineNumbers.delete(lineNumber)
+  const onEditorMouseMove = usePureCallback((e) => {
+    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
+    const lineNumber = e.target.position?.lineNumber
+    if (!lineNumber) return
+    //TODO: improve performance by only continuing if the lineNumber changes
+    let otherLines = new Set(lineNumbers)
+    otherLines.delete(lineNumber)
     document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
     document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-    for (const otherLineNumber of otherLineNumbers) {
-      document.getElementById(`grab-and-check-${otherLineNumber}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      document.getElementById(`clear-${otherLineNumber}`)?.getElementsByTagName('button')[0].classList.add('invisible')
+    for (const line of otherLines) {
+      document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
     }
-  }, [lines])
-
-  var taskActionsLeft = (lineNumber, indentation) => ({
-    domNode: (function () {
-      var domNode = document.createElement("div")
-      domNode.id = `grab-and-check-${lineNumber}`
-      domNode.classList.add("task-action")
-      domNode.onmousemove = () => onmousemove(lineNumber)
-      
-      var innerContainer = document.createElement("div")
-      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "relative")
-      innerContainer.style = `left: ${indentation*16}px`
-      domNode.appendChild(innerContainer)
-
-      innerContainer.insertAdjacentHTML('beforeend', gripSvg)
-      innerContainer.children[0].classList.add("fill-gray-500", "hover:cursor-move", "h-6", "invisible", "group-hover:visible", "z-10")
-            
-      var checkbox = document.createElement("input")
-      checkbox.type="checkbox"
-      checkbox.classList.add("cursor-pointer", "z-10")
-      innerContainer.appendChild(checkbox)
-
-      return domNode;
-    })(),
-    getId: () => `task-action-left${lineNumber}`,
-    getDomNode: function () { return this.domNode },
-    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
-  })
-  var taskActionsRight = (lineNumber) => ({
-    domNode: (function () {
-      var domNode = document.createElement("div")
-      domNode.id = `clear-${lineNumber}`
-      domNode.classList.add("task-action")
-      domNode.onmousemove = () => onmousemove(lineNumber)
-      
-      var innerContainer = document.createElement("div")
-      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[670px]", "relative")
-      domNode.appendChild(innerContainer)
-
-      var button = document.createElement("button")
-      button.classList.add(
-        "hover:bg-gray-800", "focus:bg-gray-800", //TODO: dark mode
-        "object-cover", "rounded-full", "focus:outline-none", "z-10", "invisible", "group-hover:visible"
-      )
-      button.onclick = () => deleteLineAndChildren(lineNumber)
-      innerContainer.appendChild(button)
-   
-      button.insertAdjacentHTML('beforeend', clearSvg)
-      button.children[0].classList.add("fill-gray-500", "h-6", "p-1", "z-10")
-
-      return domNode;
-    })(),
-    getId: () => `task-action-right${lineNumber}`,
-    getDomNode: function () { return this.domNode },
-    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
   })
 
-  const initializeActionButtons = useCallback((editor) => {
-    console.log("initializing!")
-    //TODO: use Monaco API to replace widget ID so the console doesn't complain
-    for (const lineNumber of [...Array(lines).keys()].map(l => l+1)) {
-      document.getElementById(`grab-and-check-${lineNumber}`)?.remove()
-      document.getElementById(`clear-${lineNumber}`)?.remove()
-      editor.addContentWidget(taskActionsLeft(lineNumber, indentations[lineNumber-1]))
-      editor.addContentWidget(taskActionsRight(lineNumber))
-    }
-    
+  const onMouseLeave = usePureCallback(() => {
     const lineNumbers = [...Array(lines).keys()].map(x => x+1)
-    editor.onMouseMove(function (e) {
-      const lineNumber = e.target.position?.lineNumber
-      if (!lineNumber) return
-      let otherLines = new Set(lineNumbers)
-      otherLines.delete(lineNumber)
-      document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-      document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-      for (const line of otherLines) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-    editor.onMouseLeave(function () {
-      for (const line of lineNumbers) {
-        document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-        document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-      }
-    })
-  }, [lines])
+    for (const line of lineNumbers) {
+      document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
+      document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
+    }
+  })
 
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
-    initializeActionButtons(editor)
-  }, [lines])
+    // initializeActionButtons(editor)
+    console.log({lines, actionButtons})
+    for (let lineNumber = actionButtons + 1; lineNumber <= lines; lineNumber++) {
+      console.log("adding line", lineNumber)
+      stateManager.addButton(lineNumber)
+    }
+    for (let lineNumber = actionButtons - 1; lineNumber >= lines; lineNumber--) {
+      console.log("removing line", lineNumber+1)
+      document.getElementById(`grab-and-check-${lineNumber+1}`).remove()
+      document.getElementById(`clear-${lineNumber+1}`).remove()
+    }
+    setActionButtons(lines)
+  }, [lines, actionButtons])
 
   useEffect(() => {
     const indentations = JSON.parse(stringifiedIndentations)
@@ -205,10 +237,22 @@ const NoSSR = ({ tasks, dark }) => {
 
   function handleEditorDidMount(editor) {
     editorRef.current = editor
-    initializeActionButtons(editor)
+    setActionButtons(lines)
+    stateManager.editor = editor
+    stateManager.addButtons()
+    
+    editor.onMouseMove(onEditorMouseMove)
+    editor.onMouseLeave(onMouseLeave)
     editor.onDidChangeCursorPosition(_setCursorPosition)
     console.log("here are all the editor methods for reference:", editor)
   }
+
+  useEffect(() => {
+    stateManager.on("text", (text) => {
+      _setModelContent(text)
+      setText(text)
+    })
+  }, [])
 
   return (
     <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
