@@ -17,6 +17,9 @@ input[type="checkbox"] {
     height: 14px;
 }
 input[type="checkbox"]:hover {
+    border: 0.1rem solid #1e1e1e;
+}
+.dark input[type="checkbox"]:hover {
     border: 0.1rem solid #d4d4d4;
 }
 
@@ -29,6 +32,9 @@ input[type="checkbox"]::before {
     background-color: #6b7280;
 }
 input[type="checkbox"]:hover::before {
+    background-color: #1e1e1e;
+}
+.dark input[type="checkbox"]:hover::before {
     background-color: #d4d4d4;
 }
 input[type="checkbox"]:checked::before {

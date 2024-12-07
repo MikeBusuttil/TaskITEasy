@@ -55,7 +55,6 @@ npm --prefix ./ui run dev
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
-        - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
         - (try to) move all DOM-generating/web API code to separate files
     - turn on spell check
     - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces

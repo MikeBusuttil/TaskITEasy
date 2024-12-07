@@ -64,7 +64,7 @@ class StateManager extends EventEmitter {
 
       var button = document.createElement("button")
       button.classList.add(
-        "hover:bg-gray-800", "focus:bg-gray-800", //TODO: dark mode
+        "hover:bg-gray-200", "focus:bg-gray-200", "dark:hover:bg-gray-800", "dark:focus:bg-gray-800",
         "object-cover", "rounded-full", "focus:outline-none", "z-10", "invisible", "group-hover:visible"
       )
       button.onclick = onclick
@@ -253,7 +253,7 @@ const NoSSR = ({ tasks, dark }) => {
   }, [])
 
   return (
-    <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border w-[800px] ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
+    <div className="relative flex flex-col p-3 rounded-lg shadow-lg border w-[800px] mx-auto border-gray-300 dark:border-gray-700 dark:shadow-gray-700 dark:bg-[#1e1e1e]">
       <Editor
         height="300px"
         width="700px"
