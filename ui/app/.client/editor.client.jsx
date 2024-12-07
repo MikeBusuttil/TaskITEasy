@@ -89,6 +89,7 @@ class StateManager extends EventEmitter {
 
   addButtons() {
     for (const lineNumber of [...Array(this.lines).keys()].map(l => l+1)) {
+      console.log("adding button", lineNumber)
       this.addButton(lineNumber)
     }
   }
@@ -242,11 +243,13 @@ const NoSSR = ({ tasks, dark }) => {
     console.log("here are all the editor methods for reference:", editor)
   }
 
+  const setTextState = (text) => {
+    _setModelContent(text)
+    setText(text)
+  }
+
   useEffect(() => {
-    stateManager.on("text", (text) => {
-      _setModelContent(text)
-      setText(text)
-    })
+    stateManager.on("text", setTextState)
   }, [])
 
   return (
@@ -257,7 +260,7 @@ const NoSSR = ({ tasks, dark }) => {
         theme={dark ? "vs-dark" : "light"}
         defaultValue={text}
         onMount={handleEditorDidMount}
-        onChange={(newText) => setText(newText)}
+        onChange={setTextState}
         value={_modelContent}
         options={{
           // Full list: https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IEditorOptions.html

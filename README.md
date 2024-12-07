@@ -44,25 +44,20 @@ npm --prefix ./ui run dev
 - deploy UI
   - create text UI
     - style like example UI:
-      - fix delete button, CTRL +Z, delete button, CTRL +z strange cyclical behavior
-      - ensure super long lines are handled properly (wrapping)
-        - fix all the breaking changes
-          - time-box using react instead of the trogleditian API's (Remix first, then NextJS)
-        - (try to) move all DOM-generating/web API code to separate files
-      - responsive: phones -> desktop
-      - allow dragability
-        * use https://github.com/atlassian/pragmatic-drag-and-drop
-        - increase item width while dragging
       - handle the last line properly
         - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
         - when last x lines are only indentations, delete x-1 lines
         - last line should replace the checkbox with a + and insert a placeholder "List item"
+      - responsive: phones -> desktop
+      - allow dragability
+        * use https://github.com/atlassian/pragmatic-drag-and-drop
+        - increase item width while dragging
       - code clean-up
         - break into files & organize into folders
         - checkbox class code
         - dark mode nastyness: https://tailwindcss.com/docs/dark-mode
+        - (try to) move all DOM-generating/web API code to separate files
     - turn on spell check
-    - get rid of duplicate word suggestions
     - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
     - synchronize with back-end
     - checking box should do something
