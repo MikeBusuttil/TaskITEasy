@@ -59,7 +59,7 @@ class StateManager extends EventEmitter {
       domNode.onmousemove = onmousemove
       
       var innerContainer = document.createElement("div")
-      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[670px]", "relative")
+      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[702px]", "relative")
       domNode.appendChild(innerContainer)
 
       var button = document.createElement("button")
@@ -81,7 +81,6 @@ class StateManager extends EventEmitter {
   })
 
   addButton(lineNumber) {
-    console.log(lineNumber, this.indentations[lineNumber-1])
     const onmousemove = () => this._onmousemove(lineNumber)
     const onclick = () => this.deleteLine(lineNumber)
     this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.indentations[lineNumber-1], onmousemove))
@@ -187,14 +186,10 @@ const NoSSR = ({ tasks, dark }) => {
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
-    // initializeActionButtons(editor)
-    console.log({lines, actionButtons})
     for (let lineNumber = actionButtons + 1; lineNumber <= lines; lineNumber++) {
-      console.log("adding line", lineNumber)
       stateManager.addButton(lineNumber)
     }
     for (let lineNumber = actionButtons - 1; lineNumber >= lines; lineNumber--) {
-      console.log("removing line", lineNumber+1)
       document.getElementById(`grab-and-check-${lineNumber+1}`).remove()
       document.getElementById(`clear-${lineNumber+1}`).remove()
     }
@@ -255,9 +250,10 @@ const NoSSR = ({ tasks, dark }) => {
   }, [])
 
   return (
-    <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
+    <div className={`relative flex flex-col p-3 rounded-lg shadow-lg border w-[800px] ${ dark ? "border-gray-700 shadow-gray-700 bg-[#1e1e1e]" : "border-gray-300"} w-1/2 mx-auto`}>
       <Editor
         height="300px"
+        width="700px"
         theme={dark ? "vs-dark" : "light"}
         defaultValue={text}
         onMount={handleEditorDidMount}
@@ -272,6 +268,7 @@ const NoSSR = ({ tasks, dark }) => {
           guides: {indentation: false},
           minimap: {enabled: false},
           folding: true,
+          wordWrap: "on",
         }}
       />
     </div>

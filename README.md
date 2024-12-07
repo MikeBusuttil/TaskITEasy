@@ -45,7 +45,6 @@ npm --prefix ./ui run dev
   - create text UI
     - style like example UI:
       - fix delete button, CTRL +Z, delete button, CTRL +z strange cyclical behavior
-      - wrap long lines
       - ensure super long lines are handled properly (wrapping)
         - fix all the breaking changes
           - time-box using react instead of the trogleditian API's (Remix first, then NextJS)

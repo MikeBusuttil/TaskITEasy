@@ -39,6 +39,12 @@ input[type="checkbox"]:checked::before {
 .monaco-editor-background {
     padding-left: 50px;
 }
+.monaco-scrollable-element {
+    width: 750px !important;
+}
 .task-action {
     left: -50px !important;
+}
+.overflow-guard {
+    width: 800px !important;
 }
