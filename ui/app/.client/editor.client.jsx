@@ -269,6 +269,9 @@ const NoSSR = ({ tasks, dark }) => {
           minimap: {enabled: false},
           folding: true,
           wordWrap: "on",
+          suggest: {
+            showWords: false,
+          },
         }}
       />
     </div>
