@@ -1,32 +1,35 @@
 {
   "name": "task-it-easy",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node ./server.js",
-    "start": "cross-env NODE_ENV=production node ./server.js"
+    "start": "vite",
+    "build": "vite build",
+    "test": "vitest",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
-  "keywords": [],
   "author": "Mike Busuttil",
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
-    "@remix-run/express": "^2.14.0",
-    "@remix-run/node": "^2.14.0",
-    "@remix-run/react": "^2.14.0",
-    "cross-env": "^7.0.3",
     "eventemitter2": "^6.4.9",
-    "express": "^4.21.1",
-    "isbot": "^4.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remix-utils": "^7.7.0"
+    "react-router-dom": "^7.5.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.14.0",
+    "@eslint/js": "^9.21.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^3.4.15",
-    "vite": "^5.4.11",
+    "vite": "^6.2.0",
+    "vitest": "^3.1.3",
     "vite-plugin-svgr": "^4.3.0"
   }
 }

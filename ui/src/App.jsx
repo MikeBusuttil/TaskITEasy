@@ -1,19 +1,10 @@
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-} from "@remix-run/react"
-import styles from "./tailwind.css?url"
-export const links = () => [
-  { rel: "stylesheet", href: styles },
-]
-import User from "./user.svg"
-import Menu from "./hamburger.svg"
-import Sun from "./sun.svg"
-import Moon from "./moon.svg"
+import { Outlet } from "react-router-dom"
+import "./tailwind.css"
+import User from "./user.svg?react"
+import Menu from "./hamburger.svg?react"
+import Sun from "./sun.svg?react"
+import Moon from "./moon.svg?react"
 import { useState } from "react"
-import { ClientOnly } from 'remix-utils/client-only'
 import NoSSR from './.client/editor.client'
 
 let tasks = [
@@ -33,14 +24,6 @@ export default function App() {
 
   return (
     <html className={dark ? "dark" : ""}>
-      <head>
-        <link
-          rel="icon"
-          href="data:image/x-icon;base64,AA"
-        />
-        <Meta />
-        <Links />
-      </head>
       <body className="h-screen dark:bg-[#1e1e1e]">
         <div className="flex flex-row h-12 w-full border-b border-gray-200 dark:border-gray-700 dark:bg-[#1e1e1e]">
           <IconHover>
@@ -56,12 +39,10 @@ export default function App() {
         </div>
 
         <div className="w-full pt-8 dark:bg-[#1e1e1e]">
-          <ClientOnly fallback={<p>Loading...</p>}>{() => <NoSSR tasks={tasks} dark={dark} />}</ClientOnly>
+          <NoSSR tasks={tasks} dark={dark} />
         </div>
         
         <Outlet />
-
-        <Scripts />
       </body>
     </html>
   )

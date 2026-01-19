@@ -1,5 +1,6 @@
-import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
+import react from '@vitejs/plugin-react'
+
 import svgr from "vite-plugin-svgr";
 const svgrConfig = {
   svgrOptions: { exportType: "default", ref: true, svgo: false, titleProp: true },
@@ -7,5 +8,5 @@ const svgrConfig = {
 }
 
 export default defineConfig({
-  plugins: [remix(), svgr(svgrConfig)],
+  plugins: [react(), svgr()],
 });

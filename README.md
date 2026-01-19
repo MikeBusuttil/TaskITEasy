@@ -10,7 +10,7 @@
 - NodeJS
 - npm
 - git
-- Linux (tested on Ubuntu)
+- Linux (tested on WSL Ubuntu)
 
 ### Serving on-line
 
@@ -24,7 +24,7 @@
 
 ```bash
 git clone
-npm --prefix ./ui install ./ui
+pnpm --dir ./ui install
 poetry install
 echo "DB_PASSWORD=s0m3_sup3r_s3cur3_p4ssw0rd" > .env
 echo "API_HOST=api.someurliown.io" >> .env
@@ -36,11 +36,14 @@ echo "ADMIN_HOST=api-admin.someurliown.io" >> .env
 
 ```bash
 poetry run docker compose -f app.yml up -d
-npm --prefix ./ui run dev
+pnpm --dir ./ui run start
 ```
 
 ## MVP
 
+- use vite react instead of remix & see if that solves the current web API barbarism
+  - get those floating icons (ie. grips) back
+  - turn them into react nodes and see if they work 🙏
 - deploy UI
   - create text UI
     - style like example UI:
