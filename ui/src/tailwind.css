@@ -48,9 +48,6 @@ input[type="checkbox"]:checked::before {
 .monaco-scrollable-element[data-mprt="5"] {
     width: 750px !important;
 }
-.task-action {
-    left: -50px !important;
-}
 .overflow-guard {
     width: 800px !important;
 }

@@ -1,10 +1,52 @@
 
 import Editor from '@monaco-editor/react'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import { usePureCallback } from "./usePureCallback"
-const gripSvg = (await import("../grip.svg?raw")).default
-const clearSvg = (await import("../clear.svg?raw")).default
+import Grip from "./grip.svg?react"
+import Clear from "./clear.svg?react"
 import EventEmitter from "eventemitter2"
+
+const TaskActionLeft = ({ lineNumber, indentation, onmousemove }) => {
+  return (
+    <div 
+      className="-left-[50px] absolute" 
+      id={`grab-and-check-${lineNumber}`}
+      onMouseMove={onmousemove}
+    >
+      <div 
+        className="flex flex-row group -top-[1px] relative"
+        style={{ left: `${indentation * 16}px` }}
+      >
+        <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible z-10" />
+        <input 
+          type="checkbox" 
+          className="cursor-pointer z-10"
+        />
+      </div>
+    </div>
+  )
+}
+
+const TaskActionRight = ({ lineNumber, onmousemove, onclick }) => {
+  return (
+    <div 
+      className="-left-[50px] absolute" 
+      id={`clear-${lineNumber}`}
+      onMouseMove={onmousemove}
+    >
+      <div className="flex flex-row group -top-[1px] left-[602px] relative">
+        <button 
+          className="hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800 object-cover rounded-full focus:outline-none z-10 invisible group-hover:visible"
+          onClick={onclick}
+        >
+          <Clear className="fill-gray-500 h-6 p-1 z-10" />
+        </button>
+      </div>
+    </div>
+  )
+}
 
 class StateManager extends EventEmitter {
   indentations = []
@@ -28,23 +70,8 @@ class StateManager extends EventEmitter {
   _taskActionsLeft = (lineNumber, indentation, onmousemove) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
-      domNode.id = `grab-and-check-${lineNumber}`
-      domNode.classList.add("task-action")
-      domNode.onmousemove = onmousemove
-      
-      var innerContainer = document.createElement("div")
-      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "relative")
-      innerContainer.style = `left: ${indentation*16}px`
-      domNode.appendChild(innerContainer)
-
-      innerContainer.insertAdjacentHTML('beforeend', gripSvg)
-      innerContainer.children[0].classList.add("fill-gray-500", "hover:cursor-move", "h-6", "invisible", "group-hover:visible", "z-10")
-            
-      var checkbox = document.createElement("input")
-      checkbox.type="checkbox"
-      checkbox.classList.add("cursor-pointer", "z-10")
-      innerContainer.appendChild(checkbox)
-
+      const root = ReactDOM.createRoot(domNode)
+      root.render(<TaskActionLeft lineNumber={lineNumber} indentation={indentation} onmousemove={onmousemove} />)
       return domNode;
     })(),
     getId: () => `task-action-left${lineNumber}`,
@@ -54,25 +81,8 @@ class StateManager extends EventEmitter {
   _taskActionsRight = (lineNumber, onmousemove, onclick) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
-      domNode.id = `clear-${lineNumber}`
-      domNode.classList.add("task-action")
-      domNode.onmousemove = onmousemove
-      
-      var innerContainer = document.createElement("div")
-      innerContainer.classList.add("flex", "flex-row", "group", "-top-[1px]", "left-[702px]", "relative")
-      domNode.appendChild(innerContainer)
-
-      var button = document.createElement("button")
-      button.classList.add(
-        "hover:bg-gray-200", "focus:bg-gray-200", "dark:hover:bg-gray-800", "dark:focus:bg-gray-800",
-        "object-cover", "rounded-full", "focus:outline-none", "z-10", "invisible", "group-hover:visible"
-      )
-      button.onclick = onclick
-      innerContainer.appendChild(button)
-   
-      button.insertAdjacentHTML('beforeend', clearSvg)
-      button.children[0].classList.add("fill-gray-500", "h-6", "p-1", "z-10")
-
+      const root = ReactDOM.createRoot(domNode)
+      root.render(<TaskActionRight lineNumber={lineNumber} onmousemove={onmousemove} onclick={onclick} />)
       return domNode;
     })(),
     getId: () => `task-action-right${lineNumber}`,
@@ -106,7 +116,7 @@ class StateManager extends EventEmitter {
       }
     }
     newText.splice(lineNumber-1, deleteLines)
-    newText = newText.join("\n")
+    newText = newText.join("\n") + "\n"
     this.emit("text", newText)
     this.editor.focus()
   }
@@ -114,7 +124,7 @@ class StateManager extends EventEmitter {
 
 const stateManager = new StateManager()
 
-const NoSSR = ({ tasks, dark }) => {
+const Tasks = ({ tasks, dark }) => {
   const editorRef = useRef(null)
   // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
   const [text, setText] = useState(`sup dude
@@ -281,4 +291,4 @@ const NoSSR = ({ tasks, dark }) => {
   )
 }
 
-export default NoSSR
+export default Tasks

@@ -5,7 +5,7 @@ import Menu from "./hamburger.svg?react"
 import Sun from "./sun.svg?react"
 import Moon from "./moon.svg?react"
 import { useState } from "react"
-import NoSSR from './.client/editor.client'
+import Tasks from './Tasks'
 
 let tasks = [
   {id: 0, text: "sup dude"},
@@ -39,7 +39,7 @@ export default function App() {
         </div>
 
         <div className="w-full pt-8 dark:bg-[#1e1e1e]">
-          <NoSSR tasks={tasks} dark={dark} />
+          <Tasks tasks={tasks} dark={dark} />
         </div>
         
         <Outlet />

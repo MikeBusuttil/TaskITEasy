@@ -41,9 +41,6 @@ pnpm --dir ./ui run start
 
 ## MVP
 
-- use vite react instead of remix & see if that solves the current web API barbarism
-  - get those floating icons (ie. grips) back
-  - turn them into react nodes and see if they work 🙏
 - deploy UI
   - create text UI
     - style like example UI:
