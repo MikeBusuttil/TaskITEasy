@@ -8,12 +8,17 @@ import Grip from "./grip.svg?react"
 import Clear from "./clear.svg?react"
 import EventEmitter from "eventemitter2"
 
-const TaskActionLeft = ({ lineNumber, indentation, onmousemove, stateManager }) => {
+const TaskActionLeft = ({ lineNumber, stateManager }) => {
+  const [indentation, setIndentation] = useState(stateManager.indentations[lineNumber - 1])
   const [mouseLine, setMouseLine] = useState(null)
 
+  const _setIndentation = useCallback((indentations) => setIndentation(indentations[lineNumber - 1]), [lineNumber])
+
   useEffect(() => {
+    stateManager.on("indentations", _setIndentation)
     stateManager.on("mouseLine", setMouseLine)
     return () => {
+      stateManager.off("indentations", _setIndentation)
       stateManager.off("mouseLine", setMouseLine)
     }
   }, [])
@@ -41,11 +46,10 @@ const TaskActionLeft = ({ lineNumber, indentation, onmousemove, stateManager }) 
   )
 }
 
-const TaskActionRight = ({ lineNumber, onmousemove, onclick, stateManager }) => {
+const TaskActionRight = ({ lineNumber, stateManager }) => {
   const [mouseLine, setMouseLine] = useState(null)
 
   useEffect(() => {
-    console.log("here is the state manager in right action:", stateManager)
     stateManager.on("mouseLine", setMouseLine)
     return () => {
       stateManager.off("mouseLine", setMouseLine)
@@ -64,7 +68,7 @@ const TaskActionRight = ({ lineNumber, onmousemove, onclick, stateManager }) => 
             "hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800 object-cover rounded-full focus:outline-none z-10",
             mouseLine === lineNumber ? "visible" : "invisible"
           ].join(" ")}
-          onClick={onclick}
+          onClick={() => stateManager.deleteLine(lineNumber)}
         >
           <Clear className="fill-gray-500 h-6 p-1 z-10" />
         </button>
@@ -75,28 +79,29 @@ const TaskActionRight = ({ lineNumber, onmousemove, onclick, stateManager }) => 
 
 class StateManager extends EventEmitter {
   indentations = []
+  instance = null
   editor = null
   lines = 0
   text = ""
 
   // this.emit("deleteLine", lineNumber)
 
-  _taskActionsLeft = (lineNumber, indentation, instance) => ({
+  _taskActionsLeft = (lineNumber, instance) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
       const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionLeft lineNumber={lineNumber} indentation={indentation} stateManager={instance} />)
+      root.render(<TaskActionLeft lineNumber={lineNumber} stateManager={instance} />)
       return domNode;
     })(),
     getId: () => `task-action-left${lineNumber}`,
     getDomNode: function () { return this.domNode },
     getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
   })
-  _taskActionsRight = (lineNumber, onclick, instance) => ({
+  _taskActionsRight = (lineNumber, instance) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
       const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionRight lineNumber={lineNumber} onclick={onclick} stateManager={instance} />)
+      root.render(<TaskActionRight lineNumber={lineNumber} stateManager={instance} />)
       return domNode;
     })(),
     getId: () => `task-action-right${lineNumber}`,
@@ -105,14 +110,12 @@ class StateManager extends EventEmitter {
   })
 
   addButton(lineNumber) {
-    const onclick = () => this.deleteLine(lineNumber)
-    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.indentations[lineNumber-1], this))
-    this.editor.addContentWidget(this._taskActionsRight(lineNumber, onclick, this))
+    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.instance))
+    this.editor.addContentWidget(this._taskActionsRight(lineNumber, this.instance))
   }
 
   addButtons() {
     for (const lineNumber of [...Array(this.lines).keys()].map(l => l+1)) {
-      console.log("adding button", lineNumber)
       this.addButton(lineNumber)
     }
   }
@@ -183,6 +186,7 @@ const Tasks = ({ tasks, dark }) => {
     stateManager.indentations = indentations
     stateManager.text = text
     stateManager.lines = lines
+    stateManager.setMaxListeners(2*lines)
   }, [indentations, text, lines])
 
   // add or remove the buttons every time a line is added or removed
@@ -198,16 +202,6 @@ const Tasks = ({ tasks, dark }) => {
     }
     setActionButtons(lines)
   }, [lines, actionButtons])
-
-  useEffect(() => {
-    const indentations = JSON.parse(stringifiedIndentations)
-    indentations.map((indentation, index) => {
-      const lineNumber = index + 1
-      if (document.getElementById(`grab-and-check-${lineNumber}`)) {
-        document.getElementById(`grab-and-check-${lineNumber}`).children[0].style = `left: ${indentation*16}px`
-      }
-    })
-  }, [stringifiedIndentations])
 
   // janky cursor snapping to beginning of line after indentations
   const ignoredCursorSources = new Set(["api", "tab", "outdent", "mouse"])
@@ -238,6 +232,7 @@ const Tasks = ({ tasks, dark }) => {
     editorRef.current = editor
     setActionButtons(lines)
     stateManager.editor = editor
+    stateManager.instance = stateManager
     stateManager.addButtons()
     
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
@@ -246,6 +241,9 @@ const Tasks = ({ tasks, dark }) => {
     console.log("here are all the editor methods for reference:", editor)
   }
 
+  useEffect(() => {
+    stateManager.emit("indentations", JSON.parse(stringifiedIndentations))
+  }, [stringifiedIndentations])
   useEffect(() => {
     stateManager.emit("mouseLine", mouseLine)
   }, [mouseLine])
