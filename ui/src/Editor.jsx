@@ -1,11 +1,9 @@
 
-import Editor from '@monaco-editor/react'
-import React from 'react'
+import MonacoEditor from '@monaco-editor/react'
 import ReactDOM from 'react-dom/client'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
-import { usePureCallback } from "./usePureCallback"
-import Grip from "./grip.svg?react"
-import Clear from "./clear.svg?react"
+import Grip from "./images/grip.svg?react"
+import Clear from "./images/clear.svg?react"
 import EventEmitter from "eventemitter2"
 
 const TaskActionLeft = ({ lineNumber, stateManager }) => {
@@ -140,7 +138,7 @@ class StateManager extends EventEmitter {
 
 const stateManager = new StateManager()
 
-const Tasks = ({ tasks, dark }) => {
+const Editor = ({ tasks, dark }) => {
   const editorRef = useRef(null)
   // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
   const [text, setText] = useState(`sup dude
@@ -259,7 +257,7 @@ const Tasks = ({ tasks, dark }) => {
 
   return (
     <div className="relative flex flex-col p-3 rounded-lg shadow-lg border w-[800px] mx-auto border-gray-300 dark:border-gray-700 dark:shadow-gray-700 dark:bg-[#1e1e1e]">
-      <Editor
+      <MonacoEditor
         height="300px"
         width="700px"
         theme={dark ? "vs-dark" : "light"}
@@ -286,4 +284,4 @@ const Tasks = ({ tasks, dark }) => {
   )
 }
 
-export default Tasks
+export default Editor

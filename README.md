@@ -43,12 +43,6 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - code clean-up
-      - break into files & organize into folders
-      - checkbox class code
-      - use React for the action buttons instead of the current web API barbarism?
-      - (try to) move all DOM-generating/web API code to separate files
-    - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
     - allow dragability
       * use https://github.com/atlassian/pragmatic-drag-and-drop ?
         - right-left dragging indents & outdents
@@ -64,20 +58,27 @@ pnpm --dir ./ui run start
         - last line should replace the checkbox with a + and insert a placeholder "List item"
       - responsive: phones -> desktop
     - turn on spell check
-    - synchronize with back-end
-  - create visual diagram UI
-    - creating tasks
-    - redrawing relationships
-    - dragability
-    - color selection
-    - synchronize with text UI & thus back-end (or vice versa)
+    - saving (ie. to local storage)
 - deploy online
-  - re-deploy on push to master
-- authentication
-- allow paid users
+  - re-deploy on push to prod
 
 ## Future
 
+- allow paid users
+  - authentication
+  - saving to the cloud
+- create visual diagram UI
+  - creating tasks
+  - redrawing relationships
+  - dragability
+  - color selection
+  - synchronize with text UI & thus back-end (or vice versa)
+- create a "lock" mode:
+  - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
+  - dragging a parent drags all children
+- code clean-up
+  - move Editor.jsx into separate folder & break it up
+  - move checkbox class code into separate file
 - give back:
   - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
   - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client

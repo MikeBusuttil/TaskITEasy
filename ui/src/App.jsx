@@ -1,11 +1,11 @@
 import { Outlet } from "react-router-dom"
-import "./tailwind.css"
-import User from "./user.svg?react"
-import Menu from "./hamburger.svg?react"
-import Sun from "./sun.svg?react"
-import Moon from "./moon.svg?react"
 import { useState } from "react"
-import Tasks from './Tasks'
+import "./App.css"
+import User from "./images/user.svg?react"
+import Menu from "./images/hamburger.svg?react"
+import Sun from "./images/sun.svg?react"
+import Moon from "./images/moon.svg?react"
+import Editor from './Editor'
 
 let tasks = [
   {id: 0, text: "sup dude"},
@@ -39,7 +39,7 @@ export default function App() {
         </div>
 
         <div className="w-full pt-8 dark:bg-[#1e1e1e]">
-          <Tasks tasks={tasks} dark={dark} />
+          <Editor tasks={tasks} dark={dark} />
         </div>
         
         <Outlet />
