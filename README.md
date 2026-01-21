@@ -43,24 +43,28 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
+    - code clean-up
+      - break into files & organize into folders
+      - checkbox class code
+      - use React for the action buttons instead of the current web API barbarism?
+      - (try to) move all DOM-generating/web API code to separate files
+    - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
+    - allow dragability
+      * use https://github.com/atlassian/pragmatic-drag-and-drop ?
+        - right-left dragging indents & outdents
+        - up-down dragging
+      - increase item width while dragging
+    - checking box should do something. Like:
+      - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
+      - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) 
     - style like example UI:
       - handle the last line properly
         - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
         - when last x lines are only indentations, delete x-1 lines
         - last line should replace the checkbox with a + and insert a placeholder "List item"
       - responsive: phones -> desktop
-      - allow dragability
-        * use https://github.com/atlassian/pragmatic-drag-and-drop
-        - increase item width while dragging
-      - code clean-up
-        - break into files & organize into folders
-        - checkbox class code
-        - (try to) move all DOM-generating/web API code to separate files
     - turn on spell check
-    - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
     - synchronize with back-end
-    - checking box should do something
-      - ie. [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) & moved to deemphasized done list
   - create visual diagram UI
     - creating tasks
     - redrawing relationships
@@ -111,7 +115,7 @@ pnpm --dir ./ui run start
 - MS-word-like cursor positioning when pressing the down arrow on the first column
 - multi-user simultaneous editing
   - subscribe to DB changes
-- alt+⬅, alt+➡
+- alt+⬅, alt+➡ (in/out-dents line & all children)
 - last line should replace the checkbox with a + and insert a placeholder "List item"
 - fix "overwrite content widget" warnings with `editor.removeContentWidget({getId: () =>`task-action-right${lineNumber}`})`
   - note: this is super tricky since you have to actually target the lines you want to remove, not just the last line

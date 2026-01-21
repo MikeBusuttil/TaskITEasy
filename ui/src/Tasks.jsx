@@ -8,18 +8,30 @@ import Grip from "./grip.svg?react"
 import Clear from "./clear.svg?react"
 import EventEmitter from "eventemitter2"
 
-const TaskActionLeft = ({ lineNumber, indentation, onmousemove }) => {
+const TaskActionLeft = ({ lineNumber, indentation, onmousemove, stateManager }) => {
+  const [mouseLine, setMouseLine] = useState(null)
+
+  useEffect(() => {
+    stateManager.on("mouseLine", setMouseLine)
+    return () => {
+      stateManager.off("mouseLine", setMouseLine)
+    }
+  }, [])
+
   return (
     <div 
       className="-left-[50px] absolute" 
       id={`grab-and-check-${lineNumber}`}
-      onMouseMove={onmousemove}
+      onMouseMove={() => stateManager.emit("mouseLine", lineNumber)}
     >
       <div 
         className="flex flex-row group -top-[1px] relative"
         style={{ left: `${indentation * 16}px` }}
       >
-        <Grip className="fill-gray-500 hover:cursor-move h-6 invisible group-hover:visible z-10" />
+        <Grip className={[
+          "fill-gray-500 hover:cursor-move h-6 group-hover:visible z-10",
+          mouseLine === lineNumber ? "visible" : "invisible"
+        ].join(" ")} />
         <input 
           type="checkbox" 
           className="cursor-pointer z-10"
@@ -29,16 +41,29 @@ const TaskActionLeft = ({ lineNumber, indentation, onmousemove }) => {
   )
 }
 
-const TaskActionRight = ({ lineNumber, onmousemove, onclick }) => {
+const TaskActionRight = ({ lineNumber, onmousemove, onclick, stateManager }) => {
+  const [mouseLine, setMouseLine] = useState(null)
+
+  useEffect(() => {
+    console.log("here is the state manager in right action:", stateManager)
+    stateManager.on("mouseLine", setMouseLine)
+    return () => {
+      stateManager.off("mouseLine", setMouseLine)
+    }
+  }, [])
+
   return (
     <div 
       className="-left-[50px] absolute" 
       id={`clear-${lineNumber}`}
-      onMouseMove={onmousemove}
+      onMouseMove={() => stateManager.emit("mouseLine", lineNumber)}
     >
       <div className="flex flex-row group -top-[1px] left-[602px] relative">
         <button 
-          className="hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800 object-cover rounded-full focus:outline-none z-10 invisible group-hover:visible"
+          className={[
+            "hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800 object-cover rounded-full focus:outline-none z-10",
+            mouseLine === lineNumber ? "visible" : "invisible"
+          ].join(" ")}
           onClick={onclick}
         >
           <Clear className="fill-gray-500 h-6 p-1 z-10" />
@@ -56,33 +81,22 @@ class StateManager extends EventEmitter {
 
   // this.emit("deleteLine", lineNumber)
 
-  _onmousemove (lineNumber) {
-    let otherLineNumbers = new Set([...Array(this.lines).keys()].map(l => l+1))
-    otherLineNumbers.delete(lineNumber)
-    document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-    document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-    for (const otherLineNumber of otherLineNumbers) {
-      document.getElementById(`grab-and-check-${otherLineNumber}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      document.getElementById(`clear-${otherLineNumber}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-    }
-  }
-
-  _taskActionsLeft = (lineNumber, indentation, onmousemove) => ({
+  _taskActionsLeft = (lineNumber, indentation, instance) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
       const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionLeft lineNumber={lineNumber} indentation={indentation} onmousemove={onmousemove} />)
+      root.render(<TaskActionLeft lineNumber={lineNumber} indentation={indentation} stateManager={instance} />)
       return domNode;
     })(),
     getId: () => `task-action-left${lineNumber}`,
     getDomNode: function () { return this.domNode },
     getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
   })
-  _taskActionsRight = (lineNumber, onmousemove, onclick) => ({
+  _taskActionsRight = (lineNumber, onclick, instance) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
       const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionRight lineNumber={lineNumber} onmousemove={onmousemove} onclick={onclick} />)
+      root.render(<TaskActionRight lineNumber={lineNumber} onclick={onclick} stateManager={instance} />)
       return domNode;
     })(),
     getId: () => `task-action-right${lineNumber}`,
@@ -91,10 +105,9 @@ class StateManager extends EventEmitter {
   })
 
   addButton(lineNumber) {
-    const onmousemove = () => this._onmousemove(lineNumber)
     const onclick = () => this.deleteLine(lineNumber)
-    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.indentations[lineNumber-1], onmousemove))
-    this.editor.addContentWidget(this._taskActionsRight(lineNumber, onmousemove, onclick))
+    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.indentations[lineNumber-1], this))
+    this.editor.addContentWidget(this._taskActionsRight(lineNumber, onclick, this))
   }
 
   addButtons() {
@@ -142,6 +155,7 @@ const Tasks = ({ tasks, dark }) => {
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
+  const [mouseLine, setMouseLine] = useState(null)
   const [actionButtons, setActionButtons] = useState(0)
   const lines = useMemo(() => (text.match(/\n/g)||[]).length, [text])
   const indentations = useMemo(() => {
@@ -171,29 +185,7 @@ const Tasks = ({ tasks, dark }) => {
     stateManager.lines = lines
   }, [indentations, text, lines])
 
-  const onEditorMouseMove = usePureCallback((e) => {
-    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
-    const lineNumber = e.target.position?.lineNumber
-    if (!lineNumber) return
-    //TODO: improve performance by only continuing if the lineNumber changes
-    let otherLines = new Set(lineNumbers)
-    otherLines.delete(lineNumber)
-    document.getElementById(`grab-and-check-${lineNumber}`)?.getElementsByTagName('svg')[0].classList.remove('invisible')
-    document.getElementById(`clear-${lineNumber}`)?.getElementsByTagName('button')[0].classList.remove('invisible')
-    for (const line of otherLines) {
-      document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-    }
-  })
-
-  const onMouseLeave = usePureCallback(() => {
-    const lineNumbers = [...Array(lines).keys()].map(x => x+1)
-    for (const line of lineNumbers) {
-      document.getElementById(`grab-and-check-${line}`)?.getElementsByTagName('svg')[0].classList.add('invisible')
-      document.getElementById(`clear-${line}`)?.getElementsByTagName('button')[0].classList.add('invisible')
-    }
-  })
-
+  // add or remove the buttons every time a line is added or removed
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
@@ -217,6 +209,7 @@ const Tasks = ({ tasks, dark }) => {
     })
   }, [stringifiedIndentations])
 
+  // janky cursor snapping to beginning of line after indentations
   const ignoredCursorSources = new Set(["api", "tab", "outdent", "mouse"])
   const lineLength = useCallback((lineNumber) => text.split("\n")[lineNumber - 1].length, [text])
   const indentationLength = useCallback((lineNumber) => indentations[lineNumber - 1]*2, [indentations])
@@ -247,11 +240,15 @@ const Tasks = ({ tasks, dark }) => {
     stateManager.editor = editor
     stateManager.addButtons()
     
-    editor.onMouseMove(onEditorMouseMove)
-    editor.onMouseLeave(onMouseLeave)
+    editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
+    editor.onMouseLeave((e) => setMouseLine(null))
     editor.onDidChangeCursorPosition(_setCursorPosition)
     console.log("here are all the editor methods for reference:", editor)
   }
+
+  useEffect(() => {
+    stateManager.emit("mouseLine", mouseLine)
+  }, [mouseLine])
 
   const setTextState = (text) => {
     _setModelContent(text)

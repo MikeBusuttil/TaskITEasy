@@ -18,7 +18,7 @@
 - neo4j for tasks DB
 - Flask for API
 - docker compose for environment orchestration
-- React using Remix for the view UI
+- React using Vite for the view UI
 - Tailwind for UI.  Get components from places like
   - https://www.tailwindawesome.com/?order=trending&price=all&query=check&technology=any&type=all
   - https://tailwindcss.5balloons.info/components/input-box/
