@@ -82,7 +82,7 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 class StateManager extends EventEmitter {
   indentations = []
   dragListener = null
-  dragStart = { row: null, col: null}
+  dragStart = { row: null, col: null, x: null, y: null }
   instance = null
   editor = null
   lines = 0
@@ -142,10 +142,9 @@ class StateManager extends EventEmitter {
     this.editor.focus()
   }
 
-  attemptIndent(target, lineIndex) {
-    //TODO: get working for gutter drags
-    const dX = target?.mouseColumn - this.dragStart.col
-    if (isNaN(dX) || Math.abs(dX) < 2) return
+  attemptIndent(newPos, lineIndex) {
+    const dX = this.dragStart.col > 2 ? newPos.col - this.dragStart.col : Math.round((newPos.x - this.dragStart.x) / 9)
+    if (isNaN(dX) || Math.abs(dX) < 2 || !newPos.col) return
     const atMaxIndentation = !lineIndex || this.indentations[lineIndex] > this.indentations[lineIndex - 1]
     if (dX > 2 && atMaxIndentation) return
     const lines = this.text.split("\n")
@@ -155,6 +154,7 @@ class StateManager extends EventEmitter {
     spaces = Math.min(spaces - spaces%2, 2*(this.indentations[lineIndex - 1] + 1))
     lines[lineIndex] = " ".repeat(spaces) + lines[lineIndex]
     this.dragStart.col = Math.max(spaces - 4, 0)
+    this.dragStart.x = newPos.x
     this.emit("text", lines.join("\n"))
   }
 
@@ -162,24 +162,22 @@ class StateManager extends EventEmitter {
     const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
     // console.log(`Dragging line ${lineNumber} — editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
     // console.log(`Browser window mouse position: ${de.clientX}, ${de.clientY}`)
-    this.attemptIndent(target, lineNumber - 1)
+    this.attemptIndent({ x: de.clientX, col: target?.mouseColumn }, lineNumber - 1)
   }
 
   offDrag = (lineNumber) => {
     // console.log(`dragend on line ${lineNumber} — stopping logging`)
     document.removeEventListener('dragover', this.dragListener)
     this.dragListener = null
-    this.dragStart = { row: null, col: null }
+    this.dragStart = { row: null, col: null, x: null, y: null }
   }
 
   onDragStart = (lineNumber, e) => {
     const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
-    // console.log(`dragstart on line ${lineNumber} — initial mouse: ${e.clientX}, ${e.clientY}`)
-
-    this.dragStart = { row: target?.position?.lineNumber, col: target?.mouseColumn || target?.position?.column }
+    this.dragStart = { row: target?.position?.lineNumber, col: target?.mouseColumn || target?.position?.column, x: e.clientX, y: e.clientY }
+    // console.log(`dragstart on line ${lineNumber}`, this.dragStart)
     this.dragListener = this.onDrag.bind(this, lineNumber)
     document.addEventListener('dragover', this.dragListener)
-
     document.addEventListener('dragend', this.offDrag.bind(this, lineNumber), { once: true })
   }
 }
