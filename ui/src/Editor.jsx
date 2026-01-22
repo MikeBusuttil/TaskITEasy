@@ -1,16 +1,16 @@
 
-import MonacoEditor from '@monaco-editor/react'
-import ReactDOM from 'react-dom/client'
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import MonacoEditor from '@monaco-editor/react'
+import EventEmitter from "eventemitter2"
+import ReactDOM from 'react-dom/client'
+
+import { logAllProps } from "./utils"
 import Grip from "./images/grip.svg?react"
 import Clear from "./images/clear.svg?react"
-import EventEmitter from "eventemitter2"
 
 const TaskActionLeft = ({ lineNumber, stateManager }) => {
   const [indentation, setIndentation] = useState(stateManager.indentations[lineNumber - 1])
   const [mouseLine, setMouseLine] = useState(null)
-  const dragRef = useRef(null)
-  const moveListenerRef = useRef(null)
 
   const _setIndentation = useCallback((indentations) => setIndentation(indentations[lineNumber - 1]), [lineNumber])
 
@@ -23,37 +23,13 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
     }
   }, [])
 
-  const startLogging = (e) => {
-    console.log(`dragstart on line ${lineNumber} — initial mouse: ${e.clientX}, ${e.clientY}`)
-
-    const handleDragOver = (de) => {
-      // dragover gives reliable coords during drag in Firefox + Chrome
-      if (de.clientX || de.clientY) {
-        console.log(`Dragging line ${lineNumber} — mouse: ${de.clientX}, ${de.clientY}`)
-      }
-    }
-
-    moveListenerRef.current = handleDragOver
-    document.addEventListener('dragover', handleDragOver)
-
-    const cleanup = () => {
-      console.log(`dragend on line ${lineNumber} — stopping logging`)
-      if (moveListenerRef.current) {
-        document.removeEventListener('dragover', moveListenerRef.current)
-        moveListenerRef.current = null
-      }
-    }
-
-    document.addEventListener('dragend', cleanup, { once: true })
-  }
-
   return (
     <div 
       className="-left-[50px] absolute" 
       id={`grab-and-check-${lineNumber}`}
       onMouseMove={() => stateManager.emit("mouseLine", lineNumber)}
       draggable
-      onDragStart={startLogging}
+      onDragStart={(event) => stateManager.onDragStart(lineNumber, event)}
     >
       <div 
         className="flex flex-row group -top-[1px] relative"
@@ -105,6 +81,8 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 
 class StateManager extends EventEmitter {
   indentations = []
+  dragListener = null
+  dragStart = { row: null, col: null}
   instance = null
   editor = null
   lines = 0
@@ -162,6 +140,47 @@ class StateManager extends EventEmitter {
     newText = newText.join("\n") + "\n"
     this.emit("text", newText)
     this.editor.focus()
+  }
+
+  attemptIndent(target, lineIndex) {
+    //TODO: get working for gutter drags
+    const dX = target?.mouseColumn - this.dragStart.col
+    if (isNaN(dX) || Math.abs(dX) < 2) return
+    const atMaxIndentation = !lineIndex || this.indentations[lineIndex] > this.indentations[lineIndex - 1]
+    if (dX > 2 && atMaxIndentation) return
+    const lines = this.text.split("\n")
+    const originalSpaces = 2 * this.indentations[lineIndex]
+    lines[lineIndex] = lines[lineIndex].slice(originalSpaces)
+    let spaces = Math.max(originalSpaces + dX, 0)
+    spaces = Math.min(spaces - spaces%2, 2*(this.indentations[lineIndex - 1] + 1))
+    lines[lineIndex] = " ".repeat(spaces) + lines[lineIndex]
+    this.dragStart.col = Math.max(spaces - 4, 0)
+    this.emit("text", lines.join("\n"))
+  }
+
+  onDrag = (lineNumber, de) => {
+    const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
+    // console.log(`Dragging line ${lineNumber} — editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
+    // console.log(`Browser window mouse position: ${de.clientX}, ${de.clientY}`)
+    this.attemptIndent(target, lineNumber - 1)
+  }
+
+  offDrag = (lineNumber) => {
+    // console.log(`dragend on line ${lineNumber} — stopping logging`)
+    document.removeEventListener('dragover', this.dragListener)
+    this.dragListener = null
+    this.dragStart = { row: null, col: null }
+  }
+
+  onDragStart = (lineNumber, e) => {
+    const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
+    // console.log(`dragstart on line ${lineNumber} — initial mouse: ${e.clientX}, ${e.clientY}`)
+
+    this.dragStart = { row: target?.position?.lineNumber, col: target?.mouseColumn || target?.position?.column }
+    this.dragListener = this.onDrag.bind(this, lineNumber)
+    document.addEventListener('dragover', this.dragListener)
+
+    document.addEventListener('dragend', this.offDrag.bind(this, lineNumber), { once: true })
   }
 }
 
@@ -266,7 +285,7 @@ const Editor = ({ tasks, dark }) => {
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
     editor.onMouseLeave((e) => setMouseLine(null))
     editor.onDidChangeCursorPosition(_setCursorPosition)
-    console.log("here are all the editor methods for reference:", editor)
+    logAllProps(editor)
   }
 
   useEffect(() => {
@@ -309,6 +328,9 @@ const Editor = ({ tasks, dark }) => {
           lineDecorationsWidth: 50,
           suggest: {
             showWords: false,
+          },
+          stickyScroll: {
+            enabled: false,
           },
         }}
       />
