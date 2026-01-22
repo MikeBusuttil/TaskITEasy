@@ -8,7 +8,7 @@
 - poetry
 - poetry-plugin-dotenv plug-in
 - NodeJS
-- npm
+- pnpm
 - git
 - Linux (tested on WSL Ubuntu)
 
@@ -44,7 +44,9 @@ pnpm --dir ./ui run start
 - deploy UI
   - create text UI
     - allow dragability
-      * use https://github.com/atlassian/pragmatic-drag-and-drop ?
+        * editor.trigger('keyboard', 'editor.action.moveLinesUpAction', {});
+          editor.trigger('keyboard', 'editor.action.moveLinesDownAction', {});
+          editor.setSelection
         - right-left dragging indents & outdents
         - up-down dragging
       - increase item width while dragging

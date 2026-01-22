@@ -9,6 +9,8 @@ import EventEmitter from "eventemitter2"
 const TaskActionLeft = ({ lineNumber, stateManager }) => {
   const [indentation, setIndentation] = useState(stateManager.indentations[lineNumber - 1])
   const [mouseLine, setMouseLine] = useState(null)
+  const dragRef = useRef(null)
+  const moveListenerRef = useRef(null)
 
   const _setIndentation = useCallback((indentations) => setIndentation(indentations[lineNumber - 1]), [lineNumber])
 
@@ -21,11 +23,37 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
     }
   }, [])
 
+  const startLogging = (e) => {
+    console.log(`dragstart on line ${lineNumber} — initial mouse: ${e.clientX}, ${e.clientY}`)
+
+    const handleDragOver = (de) => {
+      // dragover gives reliable coords during drag in Firefox + Chrome
+      if (de.clientX || de.clientY) {
+        console.log(`Dragging line ${lineNumber} — mouse: ${de.clientX}, ${de.clientY}`)
+      }
+    }
+
+    moveListenerRef.current = handleDragOver
+    document.addEventListener('dragover', handleDragOver)
+
+    const cleanup = () => {
+      console.log(`dragend on line ${lineNumber} — stopping logging`)
+      if (moveListenerRef.current) {
+        document.removeEventListener('dragover', moveListenerRef.current)
+        moveListenerRef.current = null
+      }
+    }
+
+    document.addEventListener('dragend', cleanup, { once: true })
+  }
+
   return (
     <div 
       className="-left-[50px] absolute" 
       id={`grab-and-check-${lineNumber}`}
       onMouseMove={() => stateManager.emit("mouseLine", lineNumber)}
+      draggable
+      onDragStart={startLogging}
     >
       <div 
         className="flex flex-row group -top-[1px] relative"
@@ -159,7 +187,7 @@ const Editor = ({ tasks, dark }) => {
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
   const [mouseLine, setMouseLine] = useState(null)
   const [actionButtons, setActionButtons] = useState(0)
-  const lines = useMemo(() => (text.match(/\n/g)||[]).length, [text])
+  const lines = useMemo(() => (text.match(/\n/g)||[]).length + 1, [text])
   const indentations = useMemo(() => {
     let indentations = [0]
     text.split("\n").map((line, lineNumber) => {
@@ -255,6 +283,7 @@ const Editor = ({ tasks, dark }) => {
 
   useEffect(() => {
     stateManager.on("text", setTextState)
+    return () => stateManager.off("text", setTextState)
   }, [])
 
   return (
@@ -270,7 +299,7 @@ const Editor = ({ tasks, dark }) => {
         options={{
           // Full list: https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IEditorOptions.html
           lineNumbers: "off",
-          lineHeight: 1.6787,
+          lineHeight: 25,
           glyphMargin: false,
           tabSize: 2,
           guides: {indentation: false},
