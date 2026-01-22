@@ -10,7 +10,6 @@ input[type="checkbox"] {
     align-content: center;
     justify-content: center;
     margin-top: 6px;
-    margin-right: 8px;
     border: 0.1rem solid #6b7280;
     border-radius: 2px;
     width: 14px;
@@ -41,10 +40,12 @@ input[type="checkbox"]:checked::before {
     transform: scale(1);
 }
 
-/* TODO: replace this hack with https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft */
-.monaco-editor-background {
-    padding-left: 50px;
+/* Left-justify the folding chevrons in the decorations area */
+.monaco-editor .cldr.codicon.codicon-folding-expanded::before,
+.monaco-editor .cldr.codicon.codicon-folding-collapsed::before {
+  margin-right: auto !important;
 }
+
 .monaco-scrollable-element[data-mprt="5"] {
     width: 750px !important;
 }

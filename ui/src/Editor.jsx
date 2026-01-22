@@ -94,6 +94,7 @@ class StateManager extends EventEmitter {
     getId: () => `task-action-left${lineNumber}`,
     getDomNode: function () { return this.domNode },
     getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+    allowEditorOverflow: true,
   })
   _taskActionsRight = (lineNumber, instance) => ({
     domNode: (function () {
@@ -206,6 +207,7 @@ const Editor = ({ tasks, dark }) => {
   const lineLength = useCallback((lineNumber) => text.split("\n")[lineNumber - 1].length, [text])
   const indentationLength = useCallback((lineNumber) => indentations[lineNumber - 1]*2, [indentations])
   useEffect(() => {
+    return
     const currentCursorPosition = `${cursorPosition.position.lineNumber},${cursorPosition.position.column}`
     let nextLineNumber = cursorPosition.position.lineNumber
     if(disallowedCursorPositions.has(currentCursorPosition)) {
@@ -275,6 +277,7 @@ const Editor = ({ tasks, dark }) => {
           minimap: {enabled: false},
           folding: true,
           wordWrap: "on",
+          lineDecorationsWidth: 50,
           suggest: {
             showWords: false,
           },

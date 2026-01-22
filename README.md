@@ -67,6 +67,7 @@ pnpm --dir ./ui run start
 - allow paid users
   - authentication
   - saving to the cloud
+- add back cursor snapping to beginning of line after indentations
 - create visual diagram UI
   - creating tasks
   - redrawing relationships
@@ -83,12 +84,11 @@ pnpm --dir ./ui run start
   - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
   - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
   - document how you can list all the events with console.log({editor})
-- use React for the action buttons instead of the current web API barbarism
+- allow clicking to the right of the checkbox into the editor (can hack the cursor position)
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
 - when multi-line indenting, don't add leading spaces to lines that are at their max indentation
-- allow collapsing with the chevron
 - only scroll when contents are bigger than text area
 - exports to
   - JSON (full)
@@ -105,7 +105,6 @@ pnpm --dir ./ui run start
 - implement custom folding/collapsing:
   - place them next to grip on hover instead of in the margin
   - tell Monaco which lines to fold: https://stackoverflow.com/a/64430787/2363056 + https://stackoverflow.com/questions/50148938
-- better target the margin width (for indentation folding) with Monaco API instead of CSS hack
 - fix janky highlighting when highlighting text then moving over the left gutter:
   - maybe [this API](https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft) or the layout API can help
 - allow shift-selecting with left & right arrows into indents
