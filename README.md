@@ -44,13 +44,10 @@ pnpm --dir ./ui run start
 - deploy UI
   - create text UI
     - allow dragability
-        - right-left dragging indents & outdents
-          - fix next-to-gutter dragging
-        *  editor.setSelection
-        - up-down dragging
-          * editor.trigger('keyboard', 'editor.action.moveLinesUpAction', {});
-            editor.trigger('keyboard', 'editor.action.moveLinesDownAction', {});
-      - increase item width while dragging
+      - togglable child structure preservation on drag (on by default)
+      - fix indentation of other lines on parent indentation change
+      - other ideas:
+        * editor.setSelection
     - checking box should do something. Like:
       - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
       - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) 
@@ -105,6 +102,7 @@ pnpm --dir ./ui run start
   - be more clever about the delete functionality
 - integrate with GitHub cards
 - integrate with Jira
+- make drag effects snazzier
 - sticky scroll: enable it and use overlay widgets instead of content widgets when scrolling beyond the top
 - implement custom folding/collapsing:
   - place them next to grip on hover instead of in the margin

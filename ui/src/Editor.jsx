@@ -4,7 +4,7 @@ import MonacoEditor from '@monaco-editor/react'
 import EventEmitter from "eventemitter2"
 import ReactDOM from 'react-dom/client'
 
-import { logAllProps } from "./utils"
+import { logAllProps, reorder } from "./utils"
 import Grip from "./images/grip.svg?react"
 import Clear from "./images/clear.svg?react"
 
@@ -81,42 +81,31 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 
 class StateManager extends EventEmitter {
   indentations = []
-  dragListener = null
-  dragStart = { row: null, col: null, x: null, y: null }
+  _dragListener = null
+  _dragStart = { row: null, col: null, x: null, y: null }
+  _dragLines = []
   instance = null
   editor = null
   lines = 0
   text = ""
 
-  // this.emit("deleteLine", lineNumber)
-
-  _taskActionsLeft = (lineNumber, instance) => ({
+  _spawnWidget = (lineNumber, instance, title) => ({
     domNode: (function () {
       var domNode = document.createElement("div")
       const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionLeft lineNumber={lineNumber} stateManager={instance} />)
+      const Component = title === 'left' ? TaskActionLeft : TaskActionRight
+      root.render(<Component lineNumber={lineNumber} stateManager={instance} />)
       return domNode;
     })(),
-    getId: () => `task-action-left${lineNumber}`,
+    getId: () => `task-action-${title}${lineNumber}`,
     getDomNode: function () { return this.domNode },
     getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
-    allowEditorOverflow: true,
-  })
-  _taskActionsRight = (lineNumber, instance) => ({
-    domNode: (function () {
-      var domNode = document.createElement("div")
-      const root = ReactDOM.createRoot(domNode)
-      root.render(<TaskActionRight lineNumber={lineNumber} stateManager={instance} />)
-      return domNode;
-    })(),
-    getId: () => `task-action-right${lineNumber}`,
-    getDomNode: function () { return this.domNode },
-    getPosition: function () { return {position: {lineNumber, column: 1}, preference: [monaco.editor.ContentWidgetPositionPreference.EXACT]}},
+    allowEditorOverflow: title === 'left',
   })
 
   addButton(lineNumber) {
-    this.editor.addContentWidget(this._taskActionsLeft(lineNumber, this.instance))
-    this.editor.addContentWidget(this._taskActionsRight(lineNumber, this.instance))
+    this.editor.addContentWidget(this._spawnWidget(lineNumber, this.instance, 'left'))
+    this.editor.addContentWidget(this._spawnWidget(lineNumber, this.instance, 'right'))
   }
 
   addButtons() {
@@ -142,8 +131,22 @@ class StateManager extends EventEmitter {
     this.editor.focus()
   }
 
-  attemptIndent(newPos, lineIndex) {
-    const dX = this.dragStart.col > 2 ? newPos.col - this.dragStart.col : Math.round((newPos.x - this.dragStart.x) / 9)
+  _attemptReOrder(targetLineNumber, originalLineNumber) {
+    if (!targetLineNumber || targetLineNumber === this._dragStart.row) return
+    this.emit("mouseLine", targetLineNumber)
+    //TODO: multi-line
+    const lines = reorder({
+      items: this._dragLines,
+      startIndex: this._dragStart.row - 1,
+      destIndex: targetLineNumber - 1,
+    })
+    //TODO: if indentation is > what's allowed here, trim those spaces... do that for all lines
+    this._dragStart.row = targetLineNumber
+    this.emit("text", lines.join("\n"))
+  }
+
+  _attemptIndent(newPos, lineIndex) {
+    const dX = this._dragStart.col > 2 ? newPos.col - this._dragStart.col : Math.round((newPos.x - this._dragStart.x) / 9)
     if (isNaN(dX) || Math.abs(dX) < 2 || !newPos.col) return
     const atMaxIndentation = !lineIndex || this.indentations[lineIndex] > this.indentations[lineIndex - 1]
     if (dX > 2 && atMaxIndentation) return
@@ -153,32 +156,34 @@ class StateManager extends EventEmitter {
     let spaces = Math.max(originalSpaces + dX, 0)
     spaces = Math.min(spaces - spaces%2, 2*(this.indentations[lineIndex - 1] + 1))
     lines[lineIndex] = " ".repeat(spaces) + lines[lineIndex]
-    this.dragStart.col = Math.max(spaces - 4, 0)
-    this.dragStart.x = newPos.x
+    this._dragStart.col = Math.max(spaces - 4, 0)
+    this._dragStart.x = newPos.x
     this.emit("text", lines.join("\n"))
   }
 
-  onDrag = (lineNumber, de) => {
+  _onDrag = (lineNumber, de) => {
     const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
     // console.log(`Dragging line ${lineNumber} — editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
     // console.log(`Browser window mouse position: ${de.clientX}, ${de.clientY}`)
-    this.attemptIndent({ x: de.clientX, col: target?.mouseColumn }, lineNumber - 1)
+    this._attemptReOrder(target?.position?.lineNumber, lineNumber)
+    this._attemptIndent({ x: de.clientX, col: target?.mouseColumn }, this._dragStart.row - 1)
   }
 
-  offDrag = (lineNumber) => {
+  _offDrag = (lineNumber) => {
     // console.log(`dragend on line ${lineNumber} — stopping logging`)
-    document.removeEventListener('dragover', this.dragListener)
-    this.dragListener = null
-    this.dragStart = { row: null, col: null, x: null, y: null }
+    document.removeEventListener('dragover', this._dragListener)
+    this._dragListener = null
+    this._dragStart = { row: null, col: null, x: null, y: null }
   }
 
   onDragStart = (lineNumber, e) => {
     const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
-    this.dragStart = { row: target?.position?.lineNumber, col: target?.mouseColumn || target?.position?.column, x: e.clientX, y: e.clientY }
-    // console.log(`dragstart on line ${lineNumber}`, this.dragStart)
-    this.dragListener = this.onDrag.bind(this, lineNumber)
-    document.addEventListener('dragover', this.dragListener)
-    document.addEventListener('dragend', this.offDrag.bind(this, lineNumber), { once: true })
+    this._dragStart = { row: lineNumber, col: target?.mouseColumn || target?.position?.column, x: e.clientX, y: e.clientY }
+    this._dragLines = this.text.split("\n")
+    // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
+    this._dragListener = this._onDrag.bind(this, lineNumber)
+    document.addEventListener('dragover', this._dragListener)
+    document.addEventListener('dragend', this._offDrag.bind(this, lineNumber), { once: true })
   }
 }
 
