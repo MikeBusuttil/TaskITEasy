@@ -114,34 +114,40 @@ class StateManager extends EventEmitter {
     }
   }
 
-  deleteLine(lineNumber) {
-    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
-    let newText = this.text.split("\n")
-    let deleteLines = 1
+  _countChildLines(lineNumber) {
+    let childLines = 0
     for (const indentation of this.indentations.slice(lineNumber)) {
       if (indentation > this.indentations[lineNumber - 1]) {
-        deleteLines ++
+        childLines ++
       } else {
         break
       }
     }
-    newText.splice(lineNumber-1, deleteLines)
+    return childLines
+  }
+
+  deleteLine(lineNumber) {
+    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
+    let newText = this.text.split("\n")
+    newText.splice(lineNumber-1, this._countChildLines(lineNumber) + 1)
     newText = newText.join("\n") + "\n"
     this.emit("text", newText)
     this.editor.focus()
   }
 
-  _attemptReOrder(targetLineNumber, originalLineNumber) {
-    if (!targetLineNumber || targetLineNumber === this._dragStart.row) return
+  _attemptReOrder(targetLineNumber, originalLineNumber, count) {
+    if (!targetLineNumber || this._dragStart.row === targetLineNumber) return
     this.emit("mouseLine", targetLineNumber)
-    //TODO: multi-line
+    const startIndex = originalLineNumber - 1
+    const destIndex = targetLineNumber - 1
     const lines = reorder({
       items: this._dragLines,
-      startIndex: this._dragStart.row - 1,
-      destIndex: targetLineNumber - 1,
+      count,
+      startIndex,
+      destIndex,
     })
-    //TODO: if indentation is > what's allowed here, trim those spaces... do that for all lines
     this._dragStart.row = targetLineNumber
+    //TODO: if indentation is > what's allowed here, trim those spaces... do that for all lines
     this.emit("text", lines.join("\n"))
   }
 
@@ -161,11 +167,11 @@ class StateManager extends EventEmitter {
     this.emit("text", lines.join("\n"))
   }
 
-  _onDrag = (lineNumber, de) => {
+  _onDrag = (lineNumber, childLines, de) => {
     const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
     // console.log(`Dragging line ${lineNumber} — editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
     // console.log(`Browser window mouse position: ${de.clientX}, ${de.clientY}`)
-    this._attemptReOrder(target?.position?.lineNumber, lineNumber)
+    this._attemptReOrder(target?.position?.lineNumber, lineNumber, childLines + 1)
     this._attemptIndent({ x: de.clientX, col: target?.mouseColumn }, this._dragStart.row - 1)
   }
 
@@ -180,8 +186,9 @@ class StateManager extends EventEmitter {
     const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
     this._dragStart = { row: lineNumber, col: target?.mouseColumn || target?.position?.column, x: e.clientX, y: e.clientY }
     this._dragLines = this.text.split("\n")
+    const childLines = this._countChildLines(lineNumber)
     // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
-    this._dragListener = this._onDrag.bind(this, lineNumber)
+    this._dragListener = this._onDrag.bind(this, lineNumber, childLines)
     document.addEventListener('dragover', this._dragListener)
     document.addEventListener('dragend', this._offDrag.bind(this, lineNumber), { once: true })
   }
@@ -192,17 +199,17 @@ const stateManager = new StateManager()
 const Editor = ({ tasks, dark }) => {
   const editorRef = useRef(null)
   // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
-  const [text, setText] = useState(`sup dude
-  hey fam
-    what is cracking in the hood?
-    what you sayin
-  any news
-    from who
-      idk
-        I just work here
-          got Steak hoe
-            Got Beef
-              Grade A hoe, not lean
+  const [text, setText] = useState(`0 sup dude
+  1 hey fam
+    2 what is cracking in the hood?
+    3 what you sayin
+  4 any news
+    5 from who
+      6 idk
+        7 I just work here
+          8 got Steak hoe
+            9 Got Beef
+              10 Grade A hoe, not lean
             `)
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)

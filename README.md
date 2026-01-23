@@ -45,18 +45,19 @@ pnpm --dir ./ui run start
   - create text UI
     - allow dragability
       - togglable child structure preservation on drag (on by default)
+        - fix dragging 2nd line to first line (possibly because of grip over gutter)
+        - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
       - fix indentation of other lines on parent indentation change
       - other ideas:
         * editor.setSelection
     - checking box should do something. Like:
       - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
-      - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations) 
-    - style like example UI:
-      - handle the last line properly
-        - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
-        - when last x lines are only indentations, delete x-1 lines
-        - last line should replace the checkbox with a + and insert a placeholder "List item"
-      - responsive: phones -> desktop
+      - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
+    - handle the last line properly (aka fix delete button)
+      - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
+      - when last x lines are only indentations, delete x-1 lines
+      - last line should replace the checkbox with a + and insert a placeholder "List item"
+    - responsive: phones -> desktop
     - turn on spell check
     - saving (ie. to local storage)
 - deploy online
@@ -74,16 +75,9 @@ pnpm --dir ./ui run start
   - dragability
   - color selection
   - synchronize with text UI & thus back-end (or vice versa)
-- create a "lock" mode:
-  - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
-  - dragging a parent drags all children
 - code clean-up
   - move Editor.jsx into separate folder & break it up
   - move checkbox class code into separate file
-- give back:
-  - make StackOverflow post about unable to access Browser API (like document, window, localstorage) in Remix
-  - modify docs page to add browser API keywords and example: https://remix.run/docs/en/main/file-conventions/-client
-  - document how you can list all the events with console.log({editor})
 - allow clicking to the right of the checkbox into the editor (can hack the cursor position)
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
@@ -104,6 +98,10 @@ pnpm --dir ./ui run start
 - integrate with Jira
 - make drag effects snazzier
 - sticky scroll: enable it and use overlay widgets instead of content widgets when scrolling beyond the top
+- fix UI jank:
+  - when content widgets scroll out of view (ie. a hidden div with higher z-index)
+- fix UX jank:
+  - drag scrolling the bottom threshold scrolls down but the top threshold doesn't scroll up
 - implement custom folding/collapsing:
   - place them next to grip on hover instead of in the margin
   - tell Monaco which lines to fold: https://stackoverflow.com/a/64430787/2363056 + https://stackoverflow.com/questions/50148938

@@ -18,7 +18,7 @@ export const logAllProps = (obj, depth = 0, maxDepth = 2) => {
   console.groupEnd()
 }
 
-export const reorder = ({items, startIndex, count = 1, destIndex}) => (
-  items.splice(destIndex > startIndex ? destIndex - count + 1 : destIndex, 0, ...items.splice(startIndex, count)),
-  items
-)
+export const reorder = ({items, startIndex, count = 1, destIndex}) => {
+  const output = [...items.slice(0, startIndex), ...items.slice(startIndex + count)]
+  return [...output.slice(0, destIndex), ...items.slice(startIndex, startIndex + count), ...output.slice(destIndex)]
+}
