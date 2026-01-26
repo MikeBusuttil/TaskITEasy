@@ -41,8 +41,10 @@ input[type="checkbox"]:checked::before {
 }
 
 /* Left-justify the folding chevrons in the decorations area */
-.monaco-editor .cldr.codicon.codicon-folding-expanded::before,
-.monaco-editor .cldr.codicon.codicon-folding-collapsed::before {
+.monaco-editor .cldr.codicon.codicon-folding-manual-collapsed::before,
+.monaco-editor .cldr.codicon.codicon-folding-manual-expanded::before,
+.monaco-editor .cldr.codicon.codicon-folding-collapsed::before,
+.monaco-editor .cldr.codicon.codicon-folding-expanded::before {
   margin-right: auto !important;
 }
 

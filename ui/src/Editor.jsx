@@ -130,7 +130,7 @@ class StateManager extends EventEmitter {
       this._indentationsNextCursor = null
       return
     }
-    if (!this.locked || this._dragListener || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
+    if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
     for (let lineIndex = 0; lineIndex < indentations.length; lineIndex++) {
       if (indentations[lineIndex] === this.indentations[lineIndex]) continue
       this._indentationsNextCursor = this.editor.getPosition()
@@ -161,11 +161,9 @@ class StateManager extends EventEmitter {
   }
 
   deleteLine(lineNumber) {
-    //TODO: fix this thing leaving a bunch of floating checkboxes at the end in some circumstances
     let newText = this.text.split("\n")
-    newText.splice(lineNumber-1, this._countChildLines(lineNumber) + 1)
-    newText = newText.join("\n") + "\n"
-    this.emit("text", newText)
+    newText.splice(lineNumber-1, this.locked ? this._countChildLines(lineNumber) + 1 : 1)
+    this.emit("text", newText.join("\n"))
     this.editor.focus()
   }
 

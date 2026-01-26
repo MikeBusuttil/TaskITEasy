@@ -43,14 +43,19 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - checking box should do something. Like:
-      - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
-      - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
-    - handle the last line properly (aka fix delete button)
-      - when any non-indentation is in it, add a \n to the end of the model (without loosing cursor position)
-      - when last x lines are only indentations, delete x-1 lines
-      - last line should replace the checkbox with a + and insert a placeholder "List item"
-    - responsive: phones -> desktop
+    - box checking
+      - preserve checked state on:
+        - drag re-order
+        - line creation (ie. pressing enter)
+        - line deletion (ie. removing a \n)
+      - style:
+        - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
+          - a completely separate text model will need to be maintained & synced with changes from the visible model
+        - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
+    - responsive:
+      - phones -> desktop
+      - content area height
+      - ensure Chrome works as well as Firefox
     - turn on spell check
     - saving (ie. to local storage)
 - deploy online
@@ -61,6 +66,12 @@ pnpm --dir ./ui run start
 - allow paid users
   - authentication
   - saving to the cloud
+- interface for multiple lists
+- preserve checked state (& all item metadata) on:
+  - ALT + Up/Down (editor.action.moveLinesUpAction/DownAction)
+  - multi-line selection chunk change
+  - multi multi-line selection chunk change
+  - find out what other ways/features the Monaco editor has for changing line order & add consider adding to roadmap, handling, or disabling
 - dragability fixes & improvements:
   - allow window scroll while dragging
     - track editor & window scroll relative to mouse & start positions
@@ -72,6 +83,10 @@ pnpm --dir ./ui run start
   - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
 - add tooltips to settings
 - add back forbidden area cursor snapping (to beginning of line after indentations or end of previous line when arrowed backwards).  Note: disallowedCursorPositions is still there waiting to be reacted to
+  - allow shift-selecting with left & right arrows into indents
+    - ideal solution might be to use MS-word-like cursor positioning wrt indentation
+    - hack could involve listening to the press of the shift key 
+  - disallow clicking the indented area by not listening to click events there & hiding "I" cursor
 - create visual diagram UI
   - creating tasks
   - redrawing relationships
@@ -81,7 +96,6 @@ pnpm --dir ./ui run start
 - code clean-up
   - move Editor.jsx into separate folder & break it up
   - move checkbox class code into separate file
-- allow clicking to the right of the checkbox into the editor (can hack the cursor position)
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
@@ -106,21 +120,18 @@ pnpm --dir ./ui run start
   - when content widgets scroll out of view (ie. a hidden div with higher z-index)
 - fix UX jank:
   - drag scrolling the bottom threshold scrolls down but the top threshold doesn't scroll up
+- last line should replace the checkbox with a + and insert a placeholder "List item"
 - implement custom folding/collapsing:
   - place them next to grip on hover instead of in the margin
   - tell Monaco which lines to fold: https://stackoverflow.com/a/64430787/2363056 + https://stackoverflow.com/questions/50148938
+  - fix janky (IMO) default behavior where alt + ⬆ over a folded line unfolds it and moves your line to within the folded section
 - fix janky highlighting when highlighting text then moving over the left gutter:
   - maybe [this API](https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.EditorLayoutInfo.html#contentLeft) or the layout API can help
-- allow shift-selecting with left & right arrows into indents
-  - ideal solution might be to use MS-word-like cursor positioning wrt indentation
-  - hack could involve listening to the press of the shift key 
-- disallow clicking the indented area by not listening to click events there & hiding "I" cursor
 - draw row-highlighting top & bottom borders across the entire editor card
 - MS-word-like cursor positioning when pressing the down arrow on the first column
 - multi-user simultaneous editing
   - subscribe to DB changes
-- alt+⬅, alt+➡ (in/out-dents line & all children)
-- last line should replace the checkbox with a + and insert a placeholder "List item"
+- consider adding a placeholder for empty lines
 - fix "overwrite content widget" warnings with `editor.removeContentWidget({getId: () =>`task-action-right${lineNumber}`})`
   - note: this is super tricky since you have to actually target the lines you want to remove, not just the last line
 - look into what happens to the indentations if you copy-paste a list overtop of an existing list that's the same length
