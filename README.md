@@ -44,12 +44,12 @@ pnpm --dir ./ui run start
 - deploy UI
   - create text UI
     - allow dragability
-      - togglable child structure preservation on drag (on by default)
-        - fix dragging 2nd line to first line (possibly because of grip over gutter)
-        - when a parent is outdent'ed, all children that get outdent'ed too should loose their leading spaces
-      - fix indentation of other lines on parent indentation change
-      - other ideas:
-        * editor.setSelection
+      - fix gutter unresponsiveness for indentation:
+        - track mouse position relative to start position
+      - allow window scroll while dragging
+        - track editor & window scroll relative to mouse & start positions
+    - apply indentation of other lines on parent indentation change (via keyboard)
+    - make child structure preservation togglable
     - checking box should do something. Like:
       - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
       - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)

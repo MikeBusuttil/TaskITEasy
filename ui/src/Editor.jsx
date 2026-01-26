@@ -82,8 +82,10 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 class StateManager extends EventEmitter {
   indentations = []
   _dragListener = null
-  _dragStart = { row: null, col: null, x: null, y: null }
-  _dragLines = []
+  _dragPrevious = { line: null, spaces: null } // last executed drag mutation
+  _dragStart = { line: null, col: null, x: null, y: null } //unused as of now
+  _dragLines = [] // lines when dragging started
+  _dragIndentations = [] // indentations when dragging started
   instance = null
   editor = null
   lines = 0
@@ -135,23 +137,7 @@ class StateManager extends EventEmitter {
     this.editor.focus()
   }
 
-  _attemptReOrder(targetLineNumber, originalLineNumber, count) {
-    if (!targetLineNumber || this._dragStart.row === targetLineNumber) return
-    this.emit("mouseLine", targetLineNumber)
-    const startIndex = originalLineNumber - 1
-    const destIndex = targetLineNumber - 1
-    const lines = reorder({
-      items: this._dragLines,
-      count,
-      startIndex,
-      destIndex,
-    })
-    this._dragStart.row = targetLineNumber
-    //TODO: if indentation is > what's allowed here, trim those spaces... do that for all lines
-    this.emit("text", lines.join("\n"))
-  }
-
-  _attemptIndent(newPos, lineIndex) {
+  _UNUSED_attemptIndent(newPos, lineIndex) {
     const dX = this._dragStart.col > 2 ? newPos.col - this._dragStart.col : Math.round((newPos.x - this._dragStart.x) / 9)
     if (isNaN(dX) || Math.abs(dX) < 2 || !newPos.col) return
     const atMaxIndentation = !lineIndex || this.indentations[lineIndex] > this.indentations[lineIndex - 1]
@@ -167,30 +153,93 @@ class StateManager extends EventEmitter {
     this.emit("text", lines.join("\n"))
   }
 
-  _onDrag = (lineNumber, childLines, de) => {
+  onDragStart = (lineNumber, e) => {
+    const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
+    const spaces = 2 * this.indentations[lineNumber - 1]
+    this._dragStart = { line: lineNumber, col: spaces - 5 + 1, x: e.clientX, y: e.clientY }
+    this._dragPrevious = { line: lineNumber, spaces }
+    this._dragLines = this.text.split("\n")
+    this._dragIndentations = [...this.indentations]
+    const childLines = this._countChildLines(lineNumber)
+    // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
+    this._dragListener = this._onDrag.bind(this, lineNumber, childLines)
+    document.addEventListener('dragover', this._dragListener)
+    document.addEventListener('dragend', this._offDrag.bind(this, lineNumber), { once: true })
+  }
+
+  _getMaxLeadingSpaces({srcLine, dstLine, count}) {
+    if (dstLine === 1) return 0
+    if (dstLine <= srcLine) {
+      return 2*(this._dragIndentations[dstLine - 2] +1)
+    }
+    if (dstLine + count - 2 > this._dragIndentations.length) {
+      return 2*(this._dragIndentations.slice(-2)[0] + 1)
+    }
+    return 2*(this._dragIndentations[dstLine + count - 2] + 1)
+  }
+
+  _getSpacesFromMouseColumn(mouseColumn) {
+    return 4 + mouseColumn - mouseColumn%2
+  }
+
+  _buildMutation(de, lineNumber, childLines) {
     const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
-    // console.log(`Dragging line ${lineNumber} — editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
-    // console.log(`Browser window mouse position: ${de.clientX}, ${de.clientY}`)
-    this._attemptReOrder(target?.position?.lineNumber, lineNumber, childLines + 1)
-    this._attemptIndent({ x: de.clientX, col: target?.mouseColumn }, this._dragStart.row - 1)
+    // console.log(`Dragging line ${lineNumber} grip over editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
+    // console.log(`Dragging line ${lineNumber} grip over browser window pixel: ${de.clientX}, ${de.clientY}`)
+    if (!target?.position?.lineNumber || !target?.mouseColumn) return
+    this.emit("mouseLine", target?.position?.lineNumber)
+    let spaces = null
+    if (target?.mouseColumn > 1) {
+      spaces = this._getSpacesFromMouseColumn(target?.mouseColumn)
+      const maxAllowed = this._getMaxLeadingSpaces({srcLine: lineNumber, dstLine: target?.position?.lineNumber, count: childLines + 1 })
+      spaces = Math.min(spaces, maxAllowed)
+    }
+    //TODO: fix gutter dragging by using mouse position instead of editor position
+
+    const desired = { line: target?.position?.lineNumber, spaces }
+    if (this._dragPrevious.line === desired.line && this._dragPrevious.spaces === desired.spaces) return
+    this._dragPrevious = desired
+    return {
+      line: lineNumber === desired.line ? null : desired.line,
+      spaces: 2 * this._dragIndentations[lineNumber - 1] === desired.spaces ? null : desired.spaces,
+    }
+  }
+
+  _indent({ lines, fromLineNumber, toLineNumber, count, spaces }) {
+    const originalParentSpaces = 2 * this._dragIndentations[fromLineNumber - 1]
+    const spacingChange = spaces - originalParentSpaces
+    if (!spacingChange) return lines
+    const baseSpaces = " ".repeat(spaces)
+    for (let lineIndex = toLineNumber - 1; lineIndex < toLineNumber - 1 + count; lineIndex++) {
+      lines[lineIndex] = baseSpaces + lines[lineIndex].slice(originalParentSpaces)
+    }
+    return lines
+  }
+
+  _onDrag = (lineNumber, childLines, de) => {
+    const mutation = this._buildMutation(de, lineNumber, childLines)
+    if (!mutation) return
+    let lines = [...this._dragLines]
+    if (mutation.line) lines = reorder({
+      items: lines,
+      count: childLines + 1,
+      startIndex: lineNumber - 1,
+      destIndex: mutation.line - 1,
+    })
+    if (mutation.spaces) lines = this._indent({
+      lines,
+      fromLineNumber: lineNumber,
+      toLineNumber: mutation.line || lineNumber,
+      count: childLines + 1,
+      spaces: mutation.spaces,
+    })
+    this.emit("text", lines.join("\n"))
   }
 
   _offDrag = (lineNumber) => {
     // console.log(`dragend on line ${lineNumber} — stopping logging`)
     document.removeEventListener('dragover', this._dragListener)
     this._dragListener = null
-    this._dragStart = { row: null, col: null, x: null, y: null }
-  }
-
-  onDragStart = (lineNumber, e) => {
-    const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
-    this._dragStart = { row: lineNumber, col: target?.mouseColumn || target?.position?.column, x: e.clientX, y: e.clientY }
-    this._dragLines = this.text.split("\n")
-    const childLines = this._countChildLines(lineNumber)
-    // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
-    this._dragListener = this._onDrag.bind(this, lineNumber, childLines)
-    document.addEventListener('dragover', this._dragListener)
-    document.addEventListener('dragend', this._offDrag.bind(this, lineNumber), { once: true })
   }
 }
 
