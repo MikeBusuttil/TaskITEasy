@@ -43,11 +43,6 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - allow dragability
-      - fix gutter unresponsiveness for indentation:
-        - track mouse position relative to start position
-      - allow window scroll while dragging
-        - track editor & window scroll relative to mouse & start positions
     - apply indentation of other lines on parent indentation change (via keyboard)
     - make child structure preservation togglable
     - checking box should do something. Like:
@@ -68,7 +63,14 @@ pnpm --dir ./ui run start
 - allow paid users
   - authentication
   - saving to the cloud
-- add back cursor snapping to beginning of line after indentations
+- dragability fixes & improvements:
+  - allow window scroll while dragging
+    - track editor & window scroll relative to mouse & start positions
+  - play nice with collapsed chevrons
+    - when scrolling over a collapsed chevron, don't cause it to expand (unless you sit there for an extended period of time)
+    - when uncollapsing a chevron above the line you're dragging, included the height of the chevron in dY calculations
+  - when multiple lines are selected, dragging any of those grips should drag all of those lines selected as well as all children of all lines selected
+  - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
 - create visual diagram UI
   - creating tasks
   - redrawing relationships

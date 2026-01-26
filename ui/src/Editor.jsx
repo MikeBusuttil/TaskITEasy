@@ -137,22 +137,6 @@ class StateManager extends EventEmitter {
     this.editor.focus()
   }
 
-  _UNUSED_attemptIndent(newPos, lineIndex) {
-    const dX = this._dragStart.col > 2 ? newPos.col - this._dragStart.col : Math.round((newPos.x - this._dragStart.x) / 9)
-    if (isNaN(dX) || Math.abs(dX) < 2 || !newPos.col) return
-    const atMaxIndentation = !lineIndex || this.indentations[lineIndex] > this.indentations[lineIndex - 1]
-    if (dX > 2 && atMaxIndentation) return
-    const lines = this.text.split("\n")
-    const originalSpaces = 2 * this.indentations[lineIndex]
-    lines[lineIndex] = lines[lineIndex].slice(originalSpaces)
-    let spaces = Math.max(originalSpaces + dX, 0)
-    spaces = Math.min(spaces - spaces%2, 2*(this.indentations[lineIndex - 1] + 1))
-    lines[lineIndex] = " ".repeat(spaces) + lines[lineIndex]
-    this._dragStart.col = Math.max(spaces - 4, 0)
-    this._dragStart.x = newPos.x
-    this.emit("text", lines.join("\n"))
-  }
-
   onDragStart = (lineNumber, e) => {
     const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
     const spaces = 2 * this.indentations[lineNumber - 1]
@@ -170,7 +154,7 @@ class StateManager extends EventEmitter {
   _getMaxLeadingSpaces({srcLine, dstLine, count}) {
     if (dstLine === 1) return 0
     if (dstLine <= srcLine) {
-      return 2*(this._dragIndentations[dstLine - 2] +1)
+      return 2*(this._dragIndentations[dstLine - 2] + 1)
     }
     if (dstLine + count - 2 > this._dragIndentations.length) {
       return 2*(this._dragIndentations.slice(-2)[0] + 1)
@@ -178,25 +162,22 @@ class StateManager extends EventEmitter {
     return 2*(this._dragIndentations[dstLine + count - 2] + 1)
   }
 
-  _getSpacesFromMouseColumn(mouseColumn) {
-    return 4 + mouseColumn - mouseColumn%2
-  }
-
   _buildMutation(de, lineNumber, childLines) {
     const target = this.editor.getTargetAtClientPoint(de.clientX, de.clientY)
     // console.log(`Dragging line ${lineNumber} grip over editor position: line ${target?.position?.lineNumber}, clamped column ${target?.position?.column}, mouse column ${target?.mouseColumn}`)
     // console.log(`Dragging line ${lineNumber} grip over browser window pixel: ${de.clientX}, ${de.clientY}`)
-    if (!target?.position?.lineNumber || !target?.mouseColumn) return
-    this.emit("mouseLine", target?.position?.lineNumber)
-    let spaces = null
-    if (target?.mouseColumn > 1) {
-      spaces = this._getSpacesFromMouseColumn(target?.mouseColumn)
-      const maxAllowed = this._getMaxLeadingSpaces({srcLine: lineNumber, dstLine: target?.position?.lineNumber, count: childLines + 1 })
-      spaces = Math.min(spaces, maxAllowed)
-    }
-    //TODO: fix gutter dragging by using mouse position instead of editor position
 
-    const desired = { line: target?.position?.lineNumber, spaces }
+    let targetLine = lineNumber + Math.trunc((de.clientY - this._dragStart.y) / 25)
+    targetLine = Math.min(Math.max(1, targetLine), this.lines - childLines)
+    this.emit("mouseLine", targetLine)
+
+    let spaces = null
+    const dX = Math.trunc((de.clientX - this._dragStart.x) / 8)
+    spaces = this._dragIndentations[lineNumber - 1]*2 + dX - dX%2
+    const maxAllowed = this._getMaxLeadingSpaces({srcLine: lineNumber, dstLine: targetLine, count: childLines + 1 })
+    spaces = Math.max(Math.min(spaces, maxAllowed), 0)
+
+    const desired = { line: targetLine, spaces }
     if (this._dragPrevious.line === desired.line && this._dragPrevious.spaces === desired.spaces) return
     this._dragPrevious = desired
     return {
@@ -226,7 +207,7 @@ class StateManager extends EventEmitter {
       startIndex: lineNumber - 1,
       destIndex: mutation.line - 1,
     })
-    if (mutation.spaces) lines = this._indent({
+    if (mutation.spaces !== null) lines = this._indent({
       lines,
       fromLineNumber: lineNumber,
       toLineNumber: mutation.line || lineNumber,
@@ -259,7 +240,9 @@ const Editor = ({ tasks, dark }) => {
           8 got Steak hoe
             9 Got Beef
               10 Grade A hoe, not lean
-            `)
+                11 Go ahead and touch it
+        12 I don't think so
+`)
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
