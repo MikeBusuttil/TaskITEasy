@@ -43,7 +43,6 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - make child structure preservation togglable (applies to (shift+) tabbing & dragging)
     - checking box should do something. Like:
       - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
       - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
@@ -71,6 +70,7 @@ pnpm --dir ./ui run start
   - when multiple lines are selected, dragging any of those grips should drag all of those lines selected as well as all children of all lines selected
   - dragging between a parent and its children should snap the indentation of the children & their descendants to at most the max allowed indentation
   - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
+- add tooltips to settings
 - add back forbidden area cursor snapping (to beginning of line after indentations or end of previous line when arrowed backwards).  Note: disallowedCursorPositions is still there waiting to be reacted to
 - create visual diagram UI
   - creating tasks

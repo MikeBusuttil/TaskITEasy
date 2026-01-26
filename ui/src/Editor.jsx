@@ -89,6 +89,7 @@ class StateManager extends EventEmitter {
   _dragIndentations = [] // indentations when dragging started
   instance = null
   editor = null
+  locked = true
   lines = 0
   text = ""
 
@@ -129,7 +130,7 @@ class StateManager extends EventEmitter {
       this._indentationsNextCursor = null
       return
     }
-    if (this._dragListener || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
+    if (!this.locked || this._dragListener || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
     for (let lineIndex = 0; lineIndex < indentations.length; lineIndex++) {
       if (indentations[lineIndex] === this.indentations[lineIndex]) continue
       this._indentationsNextCursor = this.editor.getPosition()
@@ -175,7 +176,7 @@ class StateManager extends EventEmitter {
     this._dragPrevious = { line: lineNumber, spaces }
     this._dragLines = this.text.split("\n")
     this._dragIndentations = [...this.indentations]
-    const childLines = this._countChildLines(lineNumber)
+    const childLines = this.locked ? this._countChildLines(lineNumber) : 0
     // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
     this._dragListener = this._onDrag.bind(this, lineNumber, childLines)
     document.addEventListener('dragover', this._dragListener)
@@ -257,7 +258,7 @@ class StateManager extends EventEmitter {
 
 const stateManager = new StateManager()
 
-const Editor = ({ tasks, dark }) => {
+const Editor = ({ tasks, dark, locked }) => {
   const editorRef = useRef(null)
   // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
   const [text, setText] = useState(`0 sup dude
@@ -304,8 +305,9 @@ const Editor = ({ tasks, dark }) => {
   useEffect(() => {
     stateManager.text = text
     stateManager.lines = lines
+    stateManager.locked = locked
     stateManager.setMaxListeners(2*lines + 1)
-  }, [text, lines])
+  }, [text, lines, locked])
 
   // add or remove the buttons every time a line is added or removed
   useEffect(() => {
