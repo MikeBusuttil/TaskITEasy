@@ -81,15 +81,21 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 
 class StateManager extends EventEmitter {
   indentations = []
+  _indentationsNextCursor = null
   _dragListener = null
   _dragPrevious = { line: null, spaces: null } // last executed drag mutation
-  _dragStart = { line: null, col: null, x: null, y: null } //unused as of now
+  _dragStart = { x: null, y: null } // cursor position when dragging started
   _dragLines = [] // lines when dragging started
   _dragIndentations = [] // indentations when dragging started
   instance = null
   editor = null
   lines = 0
   text = ""
+
+  constructor() {
+    super()
+    this.on("indentations", this._onIndentations)
+  }
 
   _spawnWidget = (lineNumber, instance, title) => ({
     domNode: (function () {
@@ -113,6 +119,31 @@ class StateManager extends EventEmitter {
   addButtons() {
     for (const lineNumber of [...Array(this.lines).keys()].map(l => l+1)) {
       this.addButton(lineNumber)
+    }
+  }
+
+  _onIndentations(indentations) {
+    if (!this.editor || this._indentationsNextCursor) {
+      this.indentations = indentations
+      this.editor?.setPosition(this._indentationsNextCursor)
+      this._indentationsNextCursor = null
+      return
+    }
+    if (this._dragListener || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
+    for (let lineIndex = 0; lineIndex < indentations.length; lineIndex++) {
+      if (indentations[lineIndex] === this.indentations[lineIndex]) continue
+      this._indentationsNextCursor = this.editor.getPosition()
+      let lines = this.text.split("\n")
+      lines = this._indent({
+        lines,
+        lineNumber: lineIndex + 2,
+        count: this._countChildLines(lineIndex + 1),
+        spaces: 2*indentations[lineIndex],
+        originalParentSpaces: 2 * this.indentations[lineIndex],
+      })
+      this.indentations = indentations
+      this.emit("text", lines.join("\n"))
+      break
     }
   }
 
@@ -140,7 +171,7 @@ class StateManager extends EventEmitter {
   onDragStart = (lineNumber, e) => {
     const target = this.editor.getTargetAtClientPoint(e.clientX, e.clientY)
     const spaces = 2 * this.indentations[lineNumber - 1]
-    this._dragStart = { line: lineNumber, col: spaces - 5 + 1, x: e.clientX, y: e.clientY }
+    this._dragStart = { x: e.clientX, y: e.clientY }
     this._dragPrevious = { line: lineNumber, spaces }
     this._dragLines = this.text.split("\n")
     this._dragIndentations = [...this.indentations]
@@ -186,12 +217,11 @@ class StateManager extends EventEmitter {
     }
   }
 
-  _indent({ lines, fromLineNumber, toLineNumber, count, spaces }) {
-    const originalParentSpaces = 2 * this._dragIndentations[fromLineNumber - 1]
+  _indent({ lines, lineNumber, count, spaces, originalParentSpaces }) {
     const spacingChange = spaces - originalParentSpaces
     if (!spacingChange) return lines
     const baseSpaces = " ".repeat(spaces)
-    for (let lineIndex = toLineNumber - 1; lineIndex < toLineNumber - 1 + count; lineIndex++) {
+    for (let lineIndex = lineNumber - 1; lineIndex < lineNumber - 1 + count; lineIndex++) {
       lines[lineIndex] = baseSpaces + lines[lineIndex].slice(originalParentSpaces)
     }
     return lines
@@ -210,9 +240,10 @@ class StateManager extends EventEmitter {
     if (mutation.spaces !== null) lines = this._indent({
       lines,
       fromLineNumber: lineNumber,
-      toLineNumber: mutation.line || lineNumber,
+      lineNumber: mutation.line || lineNumber,
       count: childLines + 1,
       spaces: mutation.spaces,
+      originalParentSpaces: 2 * this._dragIndentations[lineNumber - 1],
     })
     this.emit("text", lines.join("\n"))
   }
@@ -271,11 +302,10 @@ const Editor = ({ tasks, dark }) => {
   },[indentations])
 
   useEffect(() => {
-    stateManager.indentations = indentations
     stateManager.text = text
     stateManager.lines = lines
-    stateManager.setMaxListeners(2*lines)
-  }, [indentations, text, lines])
+    stateManager.setMaxListeners(2*lines + 1)
+  }, [text, lines])
 
   // add or remove the buttons every time a line is added or removed
   useEffect(() => {

@@ -43,8 +43,7 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - apply indentation of other lines on parent indentation change (via keyboard)
-    - make child structure preservation togglable
+    - make child structure preservation togglable (applies to (shift+) tabbing & dragging)
     - checking box should do something. Like:
       - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
       - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
@@ -70,7 +69,9 @@ pnpm --dir ./ui run start
     - when scrolling over a collapsed chevron, don't cause it to expand (unless you sit there for an extended period of time)
     - when uncollapsing a chevron above the line you're dragging, included the height of the chevron in dY calculations
   - when multiple lines are selected, dragging any of those grips should drag all of those lines selected as well as all children of all lines selected
+  - dragging between a parent and its children should snap the indentation of the children & their descendants to at most the max allowed indentation
   - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
+- add back forbidden area cursor snapping (to beginning of line after indentations or end of previous line when arrowed backwards).  Note: disallowedCursorPositions is still there waiting to be reacted to
 - create visual diagram UI
   - creating tasks
   - redrawing relationships
@@ -84,6 +85,7 @@ pnpm --dir ./ui run start
 - copy-pasting from notepad
 - copy-pasting from OneNote formatted list
 - change font (to non-monospace)
+- apply indentation of other lines on parent indentation change (via keyboard when multiple lines are selected)
 - when multi-line indenting, don't add leading spaces to lines that are at their max indentation
 - only scroll when contents are bigger than text area
 - exports to
@@ -121,6 +123,7 @@ pnpm --dir ./ui run start
 - last line should replace the checkbox with a + and insert a placeholder "List item"
 - fix "overwrite content widget" warnings with `editor.removeContentWidget({getId: () =>`task-action-right${lineNumber}`})`
   - note: this is super tricky since you have to actually target the lines you want to remove, not just the last line
+- look into what happens to the indentations if you copy-paste a list overtop of an existing list that's the same length
 
 ## Notes
 
