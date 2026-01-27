@@ -18,7 +18,7 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
 
   const onCheck = (e) => {
     setChecked(e?.target?.checked)
-    stateManager.checks[lineNumber - 1] = e?.target?.checked
+    stateManager.check({lineNumber, checked: e?.target?.checked})
   }
 
   useEffect(() => {
@@ -144,6 +144,13 @@ class StateManager extends EventEmitter {
       for (const widget of widgets) this.editor.removeContentWidget(widget)
     }
     this._widgets = this._widgets.slice(0, lines)
+  }
+
+  check({ lineNumber, checked }) {
+    const checks = [...this.checks]
+    const childLines = this.locked ? this._countChildLines(lineNumber) : 0
+    for (let lineIndex = lineNumber - 1; lineIndex < lineNumber + childLines; lineIndex++) checks[lineIndex] = checked
+    this.emit("checks", checks)
   }
 
   _onIndentations(indentations) {

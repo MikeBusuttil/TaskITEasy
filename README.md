@@ -44,13 +44,20 @@ pnpm --dir ./ui run start
 - deploy UI
   - create text UI
     - box checking
+      - style:
+        - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
+        - deemphasize (similar to keep)
       - preserve checked state on:
         - line creation (ie. pressing enter)
+          - talk to Grok: what are the different events that can alter the number of lines to determine if I should handle each 1:
+            - pressing enter
+            - having a \n in a selection and typing or copy/pasting
+            - pasting a \n
         - line deletion (ie. removing a \n and/or pressing the x)
-      - style:
-        - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
-          - a completely separate text model will need to be maintained & synced with changes from the visible model
-        - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
+      - add hideability:
+        - create a "show completed" toggle
+        - when toggled copy all checked tasks to a deemphasized done list (similar to keep)
+          - will require a completely separate text model will need to be maintained & synced with changes from the visible model
     - clean-up:
       - add "lines" as an array of objects for each line, removing separate indentation & checked arrays in stateManagement
     - responsive:
