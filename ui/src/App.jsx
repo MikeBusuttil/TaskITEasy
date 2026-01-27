@@ -9,11 +9,20 @@ import Lock from "./images/lock.svg?react"
 import Unlock from "./images/unlock.svg?react"
 import Editor from './Editor'
 
-let tasks = [
-  {id: 0, text: "sup dude"},
-  {id: 1, text: "hey fam"},
-  {id: 2, text: "what is cracking in the hood?"},
-]
+let tasks = `- [ ] sup dude
+  - [ ] hey fam
+    - [ ] what is cracking in the hood?
+    - [x] what you sayin
+  - [ ] any news
+    - [ ] from who
+      - [ ] idk
+        - [ ] I just work here
+          - [ ] got Steak hoe
+            - [ ] Got Beef
+              - [x] Grade A hoe, not lean
+                - [x] Go ahead and touch it
+        - [ ] I don't think so
+`
 
 const IconHover = ({children, onClick=() => null}) => {
   return (

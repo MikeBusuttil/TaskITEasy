@@ -5,18 +5,24 @@
 - Miro SDK for visual UI.  Example links:
   - https://developers.miro.com/docs/enable-2-way-sync-between-app-cards-and-github-cards
   - https://www.youtube.com/watch?v=ed_7TzPO0d4
-- pragmatic-drag-and-drop for text UI dragability: https://github.com/atlassian/pragmatic-drag-and-drop
 - stripe for payment
 
 ## pending
 
 - authentication
 - payment tiering?
+- plugging into graph API:
+  - neo4j for tasks DB
+  - Flask for API
 
 ## implemented
 
-- neo4j for tasks DB
-- Flask for API
+### architecture
+
+- storage will be in md in localstorage until the need for something more robust
+
+### libraries
+
 - docker compose for environment orchestration
 - React using Vite for the view UI
 - Tailwind for UI.  Get components from places like
@@ -29,4 +35,3 @@
   - https://github.com/react-monaco-editor/react-monaco-editor?tab=readme-ov-file
   - https://github.com/Microsoft/monaco-editor
   - playground: https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-listening-to-mouse-events
-  - auto-resize the canvas: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable

@@ -11,15 +11,24 @@ import Clear from "./images/clear.svg?react"
 const TaskActionLeft = ({ lineNumber, stateManager }) => {
   const [indentation, setIndentation] = useState(stateManager.indentations[lineNumber - 1])
   const [mouseLine, setMouseLine] = useState(null)
+  const [checked, setChecked] = useState(stateManager.checks[lineNumber - 1])
 
   const _setIndentation = useCallback((indentations) => setIndentation(indentations[lineNumber - 1]), [lineNumber])
+  const _setChecked = useCallback((checks) => setChecked(checks[lineNumber - 1]), [lineNumber])
+
+  const onCheck = (e) => {
+    setChecked(e?.target?.checked)
+    stateManager.checks[lineNumber - 1] = e?.target?.checked
+  }
 
   useEffect(() => {
     stateManager.on("indentations", _setIndentation)
     stateManager.on("mouseLine", setMouseLine)
+    stateManager.on("checks", _setChecked)
     return () => {
       stateManager.off("indentations", _setIndentation)
       stateManager.off("mouseLine", setMouseLine)
+      stateManager.off("checks", _setChecked)
     }
   }, [])
 
@@ -42,6 +51,8 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
         <input 
           type="checkbox" 
           className="cursor-pointer z-10"
+          checked={checked}
+          onChange={onCheck}
         />
       </div>
     </div>
@@ -81,21 +92,24 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
 
 class StateManager extends EventEmitter {
   indentations = []
+  checks = []
+  _widgets = []
   _indentationsNextCursor = null
   _dragListener = null
   _dragPrevious = { line: null, spaces: null } // last executed drag mutation
   _dragStart = { x: null, y: null } // cursor position when dragging started
   _dragLines = [] // lines when dragging started
+  _dragChecks = [] // checks when dragging started
   _dragIndentations = [] // indentations when dragging started
   instance = null
   editor = null
   locked = true
-  lines = 0
   text = ""
 
   constructor() {
     super()
     this.on("indentations", this._onIndentations)
+    this.on("checks", (checks) => this.checks = checks)
   }
 
   _spawnWidget = (lineNumber, instance, title) => ({
@@ -113,14 +127,23 @@ class StateManager extends EventEmitter {
   })
 
   addButton(lineNumber) {
-    this.editor.addContentWidget(this._spawnWidget(lineNumber, this.instance, 'left'))
-    this.editor.addContentWidget(this._spawnWidget(lineNumber, this.instance, 'right'))
+    const widgets = []
+    for (const side of ['left', 'right']) {
+      widgets.push(this._spawnWidget(lineNumber, this.instance, side))
+      this.editor.addContentWidget(widgets.slice(-1)[0])
+    }
+    return widgets
   }
 
-  addButtons() {
-    for (const lineNumber of [...Array(this.lines).keys()].map(l => l+1)) {
-      this.addButton(lineNumber)
+  updateButtons(lines) {
+    if (!this.editor) return
+    for (let lineNumber = this._widgets.length + 1; lineNumber <= lines; lineNumber++) {
+      this._widgets.push(this.addButton(lineNumber))
     }
+    for (const widgets of this._widgets.slice(lines)) {
+      for (const widget of widgets) this.editor.removeContentWidget(widget)
+    }
+    this._widgets = this._widgets.slice(0, lines)
   }
 
   _onIndentations(indentations) {
@@ -174,6 +197,7 @@ class StateManager extends EventEmitter {
     this._dragPrevious = { line: lineNumber, spaces }
     this._dragLines = this.text.split("\n")
     this._dragIndentations = [...this.indentations]
+    this._dragChecks = [...this.checks]
     const childLines = this.locked ? this._countChildLines(lineNumber) : 0
     // console.log(`dragstart on line ${lineNumber}`, this._dragStart)
     this._dragListener = this._onDrag.bind(this, lineNumber, childLines)
@@ -198,7 +222,7 @@ class StateManager extends EventEmitter {
     // console.log(`Dragging line ${lineNumber} grip over browser window pixel: ${de.clientX}, ${de.clientY}`)
 
     let targetLine = lineNumber + Math.trunc((de.clientY - this._dragStart.y) / 25)
-    targetLine = Math.min(Math.max(1, targetLine), this.lines - childLines)
+    targetLine = Math.min(Math.max(1, targetLine), this.indentations.length - childLines)
     this.emit("mouseLine", targetLine)
 
     let spaces = null
@@ -236,6 +260,13 @@ class StateManager extends EventEmitter {
       startIndex: lineNumber - 1,
       destIndex: mutation.line - 1,
     })
+    const checks = reorder({
+      items: this._dragChecks,
+      count: childLines + 1,
+      startIndex: lineNumber - 1,
+      destIndex: (mutation.line || lineNumber) - 1,
+    })
+    this.emit("checks", checks)
     if (mutation.spaces !== null) lines = this._indent({
       lines,
       fromLineNumber: lineNumber,
@@ -258,26 +289,12 @@ const stateManager = new StateManager()
 
 const Editor = ({ tasks, dark, locked }) => {
   const editorRef = useRef(null)
-  // const [text, setText] = useState(tasks.map((t) => t.text).join("\n") + "\n")
-  const [text, setText] = useState(`0 sup dude
-  1 hey fam
-    2 what is cracking in the hood?
-    3 what you sayin
-  4 any news
-    5 from who
-      6 idk
-        7 I just work here
-          8 got Steak hoe
-            9 Got Beef
-              10 Grade A hoe, not lean
-                11 Go ahead and touch it
-        12 I don't think so
-`)
+  const [mounted, setMounted] = useState(false)
+  const [text, setText] = useState("")
   const [_modelContent, _setModelContent] = useState(text)
   const [previousCursorLine, setPreviousCursorLine] = useState(0)
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
   const [mouseLine, setMouseLine] = useState(null)
-  const [actionButtons, setActionButtons] = useState(0)
   const lines = useMemo(() => (text.match(/\n/g)||[]).length + 1, [text])
   const indentations = useMemo(() => {
     let indentations = [0]
@@ -302,24 +319,27 @@ const Editor = ({ tasks, dark, locked }) => {
 
   useEffect(() => {
     stateManager.text = text
-    stateManager.lines = lines
     stateManager.locked = locked
-    stateManager.setMaxListeners(2*lines + 1)
-  }, [text, lines, locked])
+  }, [text, locked])
+
+  // parse the tasks to extract checked statuses & text
+  useEffect(() => {
+    const lines = []
+    const checks = []
+    for (const task of tasks.split("\n")) {
+      let line = task.replace(/- \[x\] /gm, '')
+      checks.push(line.length !== task.length)
+      lines.push(line.replace(/- \[ ] /gm, ''))
+    }
+    setText(lines.join("\n").trimEnd() + "\n")
+    stateManager.emit("checks", checks)
+  }, [tasks])
 
   // add or remove the buttons every time a line is added or removed
   useEffect(() => {
-    const editor = editorRef.current
-    if (!editor) return
-    for (let lineNumber = actionButtons + 1; lineNumber <= lines; lineNumber++) {
-      stateManager.addButton(lineNumber)
-    }
-    for (let lineNumber = actionButtons - 1; lineNumber >= lines; lineNumber--) {
-      document.getElementById(`grab-and-check-${lineNumber+1}`).remove()
-      document.getElementById(`clear-${lineNumber+1}`).remove()
-    }
-    setActionButtons(lines)
-  }, [lines, actionButtons])
+    stateManager.updateButtons(lines)
+    stateManager.setMaxListeners(4*lines + 10)
+  }, [lines, mounted])
 
   // janky cursor snapping to beginning of line after indentations
   const ignoredCursorSources = new Set(["api", "tab", "outdent", "mouse"])
@@ -347,17 +367,16 @@ const Editor = ({ tasks, dark, locked }) => {
     setPreviousCursorLine(nextLineNumber)
   }, [disallowedCursorPositions, cursorPosition, previousCursorLine, lineLength, indentationLength])
 
-  function handleEditorDidMount(editor) {
+  const handleEditorDidMount = (editor) => {
     editorRef.current = editor
-    setActionButtons(lines)
     stateManager.editor = editor
     stateManager.instance = stateManager
-    stateManager.addButtons()
+    setMounted(true)
     
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
     editor.onMouseLeave((e) => setMouseLine(null))
     editor.onDidChangeCursorPosition(_setCursorPosition)
-    logAllProps(editor)
+    // logAllProps(editor)
   }
 
   useEffect(() => {

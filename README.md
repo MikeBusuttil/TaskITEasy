@@ -45,16 +45,17 @@ pnpm --dir ./ui run start
   - create text UI
     - box checking
       - preserve checked state on:
-        - drag re-order
         - line creation (ie. pressing enter)
-        - line deletion (ie. removing a \n)
+        - line deletion (ie. removing a \n and/or pressing the x)
       - style:
         - hiding when "show completed" is unchecked & copied to a deemphasized done list (similar to keep)
           - a completely separate text model will need to be maintained & synced with changes from the visible model
         - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
+    - clean-up:
+      - add "lines" as an array of objects for each line, removing separate indentation & checked arrays in stateManagement
     - responsive:
       - phones -> desktop
-      - content area height
+      - content area height: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
       - ensure Chrome works as well as Firefox
     - turn on spell check
     - saving (ie. to local storage)
