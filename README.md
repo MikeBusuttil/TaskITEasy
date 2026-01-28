@@ -44,9 +44,6 @@ pnpm --dir ./ui run start
 - deploy UI
   - create text UI
     - box checking
-      - style:
-        - [strikethrough](https://microsoft.github.io/monaco-editor/playground.html?source=v0.52.0#example-interacting-with-the-editor-line-and-inline-decorations)
-        - deemphasize (similar to keep)
       - preserve checked state on:
         - line creation (ie. pressing enter)
           - talk to Grok: what are the different events that can alter the number of lines to determine if I should handle each 1:
@@ -60,12 +57,14 @@ pnpm --dir ./ui run start
           - will require a completely separate text model will need to be maintained & synced with changes from the visible model
     - clean-up:
       - add "lines" as an array of objects for each line, removing separate indentation & checked arrays in stateManagement
+      - create onMount method that fires does all the stateManager house keeping (ie. checked styling, button creation)
     - responsive:
       - phones -> desktop
       - content area height: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
       - ensure Chrome works as well as Firefox
     - turn on spell check
     - saving (ie. to local storage)
+      - consider storing strikethrough markdown along with checked status
 - deploy online
   - re-deploy on push to prod
 

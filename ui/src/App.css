@@ -3,41 +3,59 @@
 @tailwind utilities;
 
 input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    display: flex;
-    flex-direction: column;
-    align-content: center;
-    justify-content: center;
-    margin-top: 6px;
-    border: 0.1rem solid #6b7280;
-    border-radius: 2px;
-    width: 14px;
-    height: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  margin-top: 6px;
+  border: 0.1rem solid #6b7280;
+  border-radius: 2px;
+  width: 14px;
+  height: 14px;
+}
+input[type="checkbox"]:checked {
+  border: 0.1rem solid #d1d5db;
+}
+.dark input[type="checkbox"]:checked {
+  border: 0.1rem solid #374151;
 }
 input[type="checkbox"]:hover {
-    border: 0.1rem solid #1e1e1e;
+  border: 0.1rem solid #1e1e1e;
 }
 .dark input[type="checkbox"]:hover {
-    border: 0.1rem solid #d4d4d4;
+  border: 0.1rem solid #d4d4d4;
 }
 
 input[type="checkbox"]::before {
-    content: "";
-    width: 10px;
-    height: 16px;
-    clip-path: polygon(28% 38%, 41% 53%, 85% 14%, 96% 28%, 40% 78%, 15% 50%);
-    transform: scale(0);
-    background-color: #6b7280;
+  content: "";
+  width: 10px;
+  height: 16px;
+  clip-path: polygon(28% 38%, 41% 53%, 85% 14%, 96% 28%, 40% 78%, 15% 50%);
+  transform: scale(0);
+  background-color: #6b7280;
 }
 input[type="checkbox"]:hover::before {
-    background-color: #1e1e1e;
+  background-color: #1e1e1e;
 }
 .dark input[type="checkbox"]:hover::before {
-    background-color: #d4d4d4;
+  background-color: #d4d4d4;
 }
 input[type="checkbox"]:checked::before {
-    transform: scale(1);
+  transform: scale(1);
+  background-color: #d1d5db;
+}
+.dark input[type="checkbox"]:checked::before {
+  background-color: #374151;
+}
+
+.task-checked {
+  text-decoration: line-through;
+  color: #d1d5db !important;
+}
+.dark .task-checked {
+  color: #374151 !important;
 }
 
 /* Left-justify the folding chevrons in the decorations area */

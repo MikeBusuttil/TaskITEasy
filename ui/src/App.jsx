@@ -7,6 +7,7 @@ import Sun from "./images/sun.svg?react"
 import Moon from "./images/moon.svg?react"
 import Lock from "./images/lock.svg?react"
 import Unlock from "./images/unlock.svg?react"
+import Checkbox from "./images/checkbox.svg?react"
 import Editor from './Editor'
 
 let tasks = `- [ ] sup dude
@@ -24,15 +25,16 @@ let tasks = `- [ ] sup dude
         - [ ] I don't think so
 `
 
-const IconHover = ({children, onClick=() => null}) => {
+const IconHover = ({children, onClick=() => null, title}) => {
   return (
-    <button onClick={onClick} className="object-cover m-2 rounded-full focus:outline-none hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800">{children}</button>
+    <button onClick={onClick} className="object-cover m-2 rounded-full focus:outline-none hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-800 dark:focus:bg-gray-800" title={title}>{children}</button>
   )
 }
 
 export default function App() {
   const [dark, setDark] = useState(true)
   const [locked, setLocked] = useState(true)
+  const [showAll, setShowAll] = useState(true)
 
   return (
     <html className={dark ? "dark" : ""}>
@@ -42,10 +44,13 @@ export default function App() {
             <Menu className="h-full p-2 fill-gray-500" />
           </IconHover>
           <div className="flex-grow" />
-            <IconHover onClick={() => setLocked(!locked)}>
+            <IconHover onClick={() => setShowAll(!showAll)} title={showAll ? "Hide completed tasks" : "Show completed tasks"}>
+              <Checkbox className={["h-full p-2", showAll ? "fill-gray-500" : "dark:fill-gray-700 fill-gray-300"].join(" ")} />
+            </IconHover>
+            <IconHover onClick={() => setLocked(!locked)} title={locked ? "Uncouple tasks from their dependencies" : "Lock child tasks to their parents"}>
               { locked ? <Lock className="h-full p-2 fill-gray-500" /> : <Unlock className="h-full p-2 fill-gray-500" />}
             </IconHover>
-            <IconHover onClick={() => setDark(!dark)}>
+            <IconHover onClick={() => setDark(!dark)} title={dark ? "Toggle light theme" : "Give yourself to the Dark Side"}>
               { dark ? <Moon className="h-full p-2 fill-gray-500" /> : <Sun className="h-full p-2 fill-gray-500" />}
             </IconHover>
             <IconHover>

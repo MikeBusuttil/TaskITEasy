@@ -45,8 +45,9 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
         style={{ left: `${indentation * 16}px` }}
       >
         <Grip className={[
-          "fill-gray-500 hover:cursor-move h-6 group-hover:visible z-10",
-          mouseLine === lineNumber ? "visible" : "invisible"
+          "hover:cursor-move h-6 group-hover:visible z-10",
+          mouseLine === lineNumber ? "visible" : "invisible",
+          checked ? "dark:fill-gray-700 fill-gray-300" : "fill-gray-500",
         ].join(" ")} />
         <input 
           type="checkbox" 
@@ -61,11 +62,16 @@ const TaskActionLeft = ({ lineNumber, stateManager }) => {
 
 const TaskActionRight = ({ lineNumber, stateManager }) => {
   const [mouseLine, setMouseLine] = useState(null)
+  const [checked, setChecked] = useState(stateManager.checks[lineNumber - 1])
+
+  const _setChecked = useCallback((checks) => setChecked(checks[lineNumber - 1]), [lineNumber])
 
   useEffect(() => {
     stateManager.on("mouseLine", setMouseLine)
+    stateManager.on("checks", _setChecked)
     return () => {
       stateManager.off("mouseLine", setMouseLine)
+      stateManager.off("checks", _setChecked)
     }
   }, [])
 
@@ -83,7 +89,10 @@ const TaskActionRight = ({ lineNumber, stateManager }) => {
           ].join(" ")}
           onClick={() => stateManager.deleteLine(lineNumber)}
         >
-          <Clear className="fill-gray-500 h-6 p-1 z-10" />
+          <Clear className={[
+            "h-6 p-1 z-10",
+            checked ? "dark:fill-gray-700 fill-gray-300" : "fill-gray-500",
+          ].join(' ')} />
         </button>
       </div>
     </div>
@@ -103,13 +112,14 @@ class StateManager extends EventEmitter {
   _dragIndentations = [] // indentations when dragging started
   instance = null
   editor = null
+  editorDecorations = null
   locked = true
   text = ""
 
   constructor() {
     super()
     this.on("indentations", this._onIndentations)
-    this.on("checks", (checks) => this.checks = checks)
+    this.on("checks", this._onChecks)
   }
 
   _spawnWidget = (lineNumber, instance, title) => ({
@@ -151,6 +161,28 @@ class StateManager extends EventEmitter {
     const childLines = this.locked ? this._countChildLines(lineNumber) : 0
     for (let lineIndex = lineNumber - 1; lineIndex < lineNumber + childLines; lineIndex++) checks[lineIndex] = checked
     this.emit("checks", checks)
+  }
+
+  _onChecks(checks) {
+    this.checks = checks
+    if (!this.editor) return
+
+    const decorations = []
+    checks.forEach((checked, lineIndex) => {
+      if (!checked) return
+      const lineNumber = lineIndex + 1
+      const startColumn = 2*this.indentations[lineIndex] + 1
+      const endColumn = this.editor.getModel().getLineMaxColumn(lineNumber)
+      console.log({endColumn, startColumn})
+      decorations.push({
+        range: new monaco.Range(lineNumber, startColumn, lineNumber, endColumn),
+        options: {
+          inlineClassName: 'task-checked',
+        },
+      })
+    })
+    this.editorDecorations.clear()
+    this.editorDecorations.set(decorations)
   }
 
   _onIndentations(indentations) {
@@ -345,7 +377,7 @@ const Editor = ({ tasks, dark, locked }) => {
   // add or remove the buttons every time a line is added or removed
   useEffect(() => {
     stateManager.updateButtons(lines)
-    stateManager.setMaxListeners(4*lines + 10)
+    stateManager.setMaxListeners(5*lines + 10)
   }, [lines, mounted])
 
   // janky cursor snapping to beginning of line after indentations
@@ -378,6 +410,8 @@ const Editor = ({ tasks, dark, locked }) => {
     editorRef.current = editor
     stateManager.editor = editor
     stateManager.instance = stateManager
+    stateManager.editorDecorations = editor.createDecorationsCollection()
+    stateManager.emit("checks", stateManager.checks)
     setMounted(true)
     
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
