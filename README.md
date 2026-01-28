@@ -43,6 +43,13 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
+    - fix (un)indenting:
+      - CTRL+Z after accidentally making something a parent updates all the children
+        - I guess just add the CTRL+Z case to the "do nothing" path in _onIndentations
+      - incorrect cursor position when (un)indenting a line with children
+        - unindent after wrongful cursor snap seems to make the next unindent not work for the children
+        - cursor always snaps to end of doc when unindenting "I just work here" line
+      - incorrect strikethrough starting column on (un)indent (in most/some scenarios)
     - box checking
       - preserve checked state on:
         - line creation (ie. pressing enter)
@@ -52,9 +59,8 @@ pnpm --dir ./ui run start
             - pasting a \n
         - line deletion (ie. removing a \n and/or pressing the x)
       - add hideability:
-        - create a "show completed" toggle
-        - when toggled copy all checked tasks to a deemphasized done list (similar to keep)
-          - will require a completely separate text model will need to be maintained & synced with changes from the visible model
+        - when toggled, hide all completed items
+          - will require a completely separate completed-only text model to be maintained & synced with full model
     - clean-up:
       - add "lines" as an array of objects for each line, removing separate indentation & checked arrays in stateManagement
       - create onMount method that fires does all the stateManager house keeping (ie. checked styling, button creation)
@@ -63,6 +69,7 @@ pnpm --dir ./ui run start
       - content area height: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
       - ensure Chrome works as well as Firefox
     - turn on spell check
+    - whenever last character isn't \n, add a \n (without moving the cursor)
     - saving (ie. to local storage)
       - consider storing strikethrough markdown along with checked status
 - deploy online

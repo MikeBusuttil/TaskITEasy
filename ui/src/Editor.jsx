@@ -156,24 +156,14 @@ class StateManager extends EventEmitter {
     this._widgets = this._widgets.slice(0, lines)
   }
 
-  check({ lineNumber, checked }) {
-    const checks = [...this.checks]
-    const childLines = this.locked ? this._countChildLines(lineNumber) : 0
-    for (let lineIndex = lineNumber - 1; lineIndex < lineNumber + childLines; lineIndex++) checks[lineIndex] = checked
-    this.emit("checks", checks)
-  }
-
-  _onChecks(checks) {
-    this.checks = checks
+  updateStyling() {
     if (!this.editor) return
-
     const decorations = []
-    checks.forEach((checked, lineIndex) => {
+    this.checks.forEach((checked, lineIndex) => {
       if (!checked) return
       const lineNumber = lineIndex + 1
       const startColumn = 2*this.indentations[lineIndex] + 1
       const endColumn = this.editor.getModel().getLineMaxColumn(lineNumber)
-      console.log({endColumn, startColumn})
       decorations.push({
         range: new monaco.Range(lineNumber, startColumn, lineNumber, endColumn),
         options: {
@@ -185,6 +175,18 @@ class StateManager extends EventEmitter {
     this.editorDecorations.set(decorations)
   }
 
+  check({ lineNumber, checked }) {
+    const checks = [...this.checks]
+    const childLines = this.locked ? this._countChildLines(lineNumber) : 0
+    for (let lineIndex = lineNumber - 1; lineIndex < lineNumber + childLines; lineIndex++) checks[lineIndex] = checked
+    this.emit("checks", checks)
+  }
+
+  _onChecks(checks) {
+    this.checks = checks
+    this.updateStyling()
+  }
+
   _onIndentations(indentations) {
     if (!this.editor || this._indentationsNextCursor) {
       this.indentations = indentations
@@ -192,7 +194,11 @@ class StateManager extends EventEmitter {
       this._indentationsNextCursor = null
       return
     }
-    if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) return this.indentations = indentations
+    if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) {
+      this.indentations = indentations
+      this.updateStyling()
+      return
+    }
     for (let lineIndex = 0; lineIndex < indentations.length; lineIndex++) {
       if (indentations[lineIndex] === this.indentations[lineIndex]) continue
       this._indentationsNextCursor = this.editor.getPosition()
@@ -206,7 +212,7 @@ class StateManager extends EventEmitter {
       })
       this.indentations = indentations
       this.emit("text", lines.join("\n"))
-      break
+      return
     }
   }
 
@@ -359,6 +365,7 @@ const Editor = ({ tasks, dark, locked }) => {
   useEffect(() => {
     stateManager.text = text
     stateManager.locked = locked
+    stateManager.updateStyling() //TODO: improve performance by only running on indentation or line change (not all changes)
   }, [text, locked])
 
   // parse the tasks to extract checked statuses & text
@@ -411,7 +418,7 @@ const Editor = ({ tasks, dark, locked }) => {
     stateManager.editor = editor
     stateManager.instance = stateManager
     stateManager.editorDecorations = editor.createDecorationsCollection()
-    stateManager.emit("checks", stateManager.checks)
+    stateManager.updateStyling()
     setMounted(true)
     
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
