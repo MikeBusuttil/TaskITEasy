@@ -4,7 +4,7 @@ import MonacoEditor from '@monaco-editor/react'
 import EventEmitter from "eventemitter2"
 import ReactDOM from 'react-dom/client'
 
-import { logAllProps, reorder } from "./utils"
+import { logAllProps, reorder, constructIndentations } from "./utils"
 import Grip from "./images/grip.svg?react"
 import Clear from "./images/clear.svg?react"
 
@@ -103,13 +103,15 @@ class StateManager extends EventEmitter {
   indentations = []
   checks = []
   _widgets = []
-  _indentationsNextCursor = null
+  _indentationsPreventNext = false // ensures automatic child indentation only runs once
+  _indentForceCursorUpdate = false // ensures model change doesn't move cursor
   _dragListener = null
   _dragPrevious = { line: null, spaces: null } // last executed drag mutation
   _dragStart = { x: null, y: null } // cursor position when dragging started
   _dragLines = [] // lines when dragging started
   _dragChecks = [] // checks when dragging started
   _dragIndentations = [] // indentations when dragging started
+  lastKnownCursorPosition = null
   instance = null
   editor = null
   editorDecorations = null
@@ -182,16 +184,35 @@ class StateManager extends EventEmitter {
     this.emit("checks", checks)
   }
 
+  updateCursor() {
+    if (!this._indentForceCursorUpdate) return
+    if (!this.editor || !this._indentationsPreventNext) return
+    this.editor.setPosition(this.lastKnownCursorPosition)
+    this._indentationsPreventNext = false
+    this._indentForceCursorUpdate = false
+    this.updateStyling()
+  }
+
   _onChecks(checks) {
     this.checks = checks
     this.updateStyling()
   }
 
+  _willIndentationsChange(text) {
+    const nextIndentations = constructIndentations(text)
+    for (let lineIndex = 0; lineIndex < nextIndentations.length; lineIndex++) {
+      if (nextIndentations[lineIndex] === this.indentations[lineIndex]) continue
+      return true
+    }
+    return false
+  }
+
   _onIndentations(indentations) {
-    if (!this.editor || this._indentationsNextCursor) {
+    if (!this.editor || this._indentationsPreventNext) {
       this.indentations = indentations
-      this.editor?.setPosition(this._indentationsNextCursor)
-      this._indentationsNextCursor = null
+      this.editor?.setPosition(this.lastKnownCursorPosition)
+      this._indentationsPreventNext = false
+      this.updateStyling()
       return
     }
     if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) {
@@ -201,19 +222,28 @@ class StateManager extends EventEmitter {
     }
     for (let lineIndex = 0; lineIndex < indentations.length; lineIndex++) {
       if (indentations[lineIndex] === this.indentations[lineIndex]) continue
-      this._indentationsNextCursor = this.editor.getPosition()
+      const childLines = this._countChildLines(lineIndex + 1)
+      if (!childLines) {
+        this.indentations = indentations
+        this.updateStyling()
+        return
+      }
       let lines = this.text.split("\n")
       lines = this._indent({
         lines,
         lineNumber: lineIndex + 2,
-        count: this._countChildLines(lineIndex + 1),
+        count: childLines,
         spaces: 2*indentations[lineIndex],
         originalParentSpaces: 2 * this.indentations[lineIndex],
       })
       this.indentations = indentations
-      this.emit("text", lines.join("\n"))
+      const text = lines.join("\n")
+      this._indentForceCursorUpdate = !this._willIndentationsChange(text)
+      this._indentationsPreventNext = true
+      this.emit("text", text)
       return
     }
+    this._indentationsPreventNext = false
   }
 
   _countChildLines(lineNumber) {
@@ -341,15 +371,7 @@ const Editor = ({ tasks, dark, locked }) => {
   const [cursorPosition, _setCursorPosition] = useState({ position: {lineNumber: 1, column: 1}, source: "NA"})
   const [mouseLine, setMouseLine] = useState(null)
   const lines = useMemo(() => (text.match(/\n/g)||[]).length + 1, [text])
-  const indentations = useMemo(() => {
-    let indentations = [0]
-    text.split("\n").map((line, lineNumber) => {
-      if (!lineNumber) return
-      const indentation = Math.floor(line.match(/^(  )*/g)[0].length / 2)
-      indentations.push(Math.min(indentations.slice(-1)[0] + 1, indentation))
-    })
-    return indentations
-  },[text])
+  const indentations = useMemo(() => constructIndentations(text), [text])
   const stringifiedIndentations = useMemo(() => JSON.stringify(indentations), [indentations])
   const disallowedCursorPositions = useMemo(() => {
     let disallowed = new Set()
@@ -365,7 +387,7 @@ const Editor = ({ tasks, dark, locked }) => {
   useEffect(() => {
     stateManager.text = text
     stateManager.locked = locked
-    stateManager.updateStyling() //TODO: improve performance by only running on indentation or line change (not all changes)
+    stateManager.updateCursor()
   }, [text, locked])
 
   // parse the tasks to extract checked statuses & text
@@ -438,6 +460,10 @@ const Editor = ({ tasks, dark, locked }) => {
     _setModelContent(text)
     setText(text)
   }
+
+  useEffect(() => {
+    stateManager.lastKnownCursorPosition = cursorPosition.position
+  }, [cursorPosition])
 
   useEffect(() => {
     stateManager.on("text", setTextState)

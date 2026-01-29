@@ -46,10 +46,6 @@ pnpm --dir ./ui run start
     - fix (un)indenting:
       - CTRL+Z after accidentally making something a parent updates all the children
         - I guess just add the CTRL+Z case to the "do nothing" path in _onIndentations
-      - incorrect cursor position when (un)indenting a line with children
-        - unindent after wrongful cursor snap seems to make the next unindent not work for the children
-        - cursor always snaps to end of doc when unindenting "I just work here" line
-      - incorrect strikethrough starting column on (un)indent (in most/some scenarios)
     - box checking
       - preserve checked state on:
         - line creation (ie. pressing enter)
@@ -72,6 +68,7 @@ pnpm --dir ./ui run start
     - whenever last character isn't \n, add a \n (without moving the cursor)
     - saving (ie. to local storage)
       - consider storing strikethrough markdown along with checked status
+    - find better placement for the delete button (ie. for super long lines)
 - deploy online
   - re-deploy on push to prod
 
@@ -95,7 +92,9 @@ pnpm --dir ./ui run start
   - when multiple lines are selected, dragging any of those grips should drag all of those lines selected as well as all children of all lines selected
   - dragging between a parent and its children should snap the indentation of the children & their descendants to at most the max allowed indentation
   - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
-- add tooltips to settings
+- add saving & loading to/from local machine (including with ctrl+S)
+  - add top left save, save as, & open icons
+- add saving & loading to/from Google Drive
 - add back forbidden area cursor snapping (to beginning of line after indentations or end of previous line when arrowed backwards).  Note: disallowedCursorPositions is still there waiting to be reacted to
   - allow shift-selecting with left & right arrows into indents
     - ideal solution might be to use MS-word-like cursor positioning wrt indentation
