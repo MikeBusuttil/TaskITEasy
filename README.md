@@ -43,9 +43,6 @@ pnpm --dir ./ui run start
 
 - deploy UI
   - create text UI
-    - fix (un)indenting:
-      - CTRL+Z after accidentally making something a parent updates all the children
-        - I guess just add the CTRL+Z case to the "do nothing" path in _onIndentations
     - box checking
       - preserve checked state on:
         - line creation (ie. pressing enter)

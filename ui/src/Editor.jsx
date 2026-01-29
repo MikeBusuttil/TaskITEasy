@@ -112,6 +112,7 @@ class StateManager extends EventEmitter {
   _dragChecks = [] // checks when dragging started
   _dragIndentations = [] // indentations when dragging started
   lastKnownCursorPosition = null
+  lastAction = null
   instance = null
   editor = null
   editorDecorations = null
@@ -215,7 +216,7 @@ class StateManager extends EventEmitter {
       this.updateStyling()
       return
     }
-    if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) {
+    if (!this.locked || this._dragListener || indentations.length !== this.indentations.length || this.lastAction !== null || this.editor?.getSelection()?.startLineNumber !== this.editor?.getSelection()?.endLineNumber) {
       this.indentations = indentations
       this.updateStyling()
       return
@@ -446,6 +447,7 @@ const Editor = ({ tasks, dark, locked }) => {
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
     editor.onMouseLeave((e) => setMouseLine(null))
     editor.onDidChangeCursorPosition(_setCursorPosition)
+    editor.onDidChangeModelContent((e) => stateManager.lastAction = e.isUndoing ? "undo" : e.isRedoing ? "redo" : null) // Warning: This might be race condition!  When this logic is moved into the class as a method it fails to get set (in time or maybe not at all)
     // logAllProps(editor)
   }
 
@@ -462,6 +464,7 @@ const Editor = ({ tasks, dark, locked }) => {
   }
 
   useEffect(() => {
+    // console.log("cursor updated", cursorPosition.position, cursorPosition)
     stateManager.lastKnownCursorPosition = cursorPosition.position
   }, [cursorPosition])
 
