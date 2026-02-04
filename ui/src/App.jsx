@@ -37,33 +37,31 @@ export default function App() {
   const [showAll, setShowAll] = useState(true)
 
   return (
-    <html className={dark ? "dark" : ""}>
-      <body className="h-screen dark:bg-[#1e1e1e]">
-        <div className="flex flex-row h-12 w-full border-b border-gray-200 dark:border-gray-700 dark:bg-[#1e1e1e]">
-          <IconHover>
-            <Menu className="h-full p-2 fill-gray-500" />
+    <div className={["h-screen dark:bg-[#1e1e1e]", dark ? "dark" : ""].join(" ")}>
+      <div className="flex flex-row h-12 w-full border-b border-gray-200 dark:border-gray-700 dark:bg-[#1e1e1e]">
+        <IconHover>
+          <Menu className="h-full p-2 fill-gray-500" />
+        </IconHover>
+        <div className="flex-grow" />
+          <IconHover onClick={() => setShowAll(!showAll)} title={showAll ? "Hide completed tasks" : "Show completed tasks"}>
+            <Checkbox className={["h-full p-2", showAll ? "fill-gray-500" : "dark:fill-gray-700 fill-gray-300"].join(" ")} />
           </IconHover>
-          <div className="flex-grow" />
-            <IconHover onClick={() => setShowAll(!showAll)} title={showAll ? "Hide completed tasks" : "Show completed tasks"}>
-              <Checkbox className={["h-full p-2", showAll ? "fill-gray-500" : "dark:fill-gray-700 fill-gray-300"].join(" ")} />
-            </IconHover>
-            <IconHover onClick={() => setLocked(!locked)} title={locked ? "Uncouple tasks from their dependencies" : "Lock child tasks to their parents"}>
-              { locked ? <Lock className="h-full p-2 fill-gray-500" /> : <Unlock className="h-full p-2 fill-gray-500" />}
-            </IconHover>
-            <IconHover onClick={() => setDark(!dark)} title={dark ? "Toggle light theme" : "Give yourself to the Dark Side"}>
-              { dark ? <Moon className="h-full p-2 fill-gray-500" /> : <Sun className="h-full p-2 fill-gray-500" />}
-            </IconHover>
-            <IconHover>
-              <User className="h-full p-2 fill-gray-500" onClick={() => console.log(document)} />
-            </IconHover>
-        </div>
+          <IconHover onClick={() => setLocked(!locked)} title={locked ? "Uncouple tasks from their dependencies" : "Lock child tasks to their parents"}>
+            { locked ? <Lock className="h-full p-2 fill-gray-500" /> : <Unlock className="h-full p-2 fill-gray-500" />}
+          </IconHover>
+          <IconHover onClick={() => setDark(!dark)} title={dark ? "Toggle light theme" : "Give yourself to the Dark Side"}>
+            { dark ? <Moon className="h-full p-2 fill-gray-500" /> : <Sun className="h-full p-2 fill-gray-500" />}
+          </IconHover>
+          <IconHover>
+            <User className="h-full p-2 fill-gray-500" onClick={() => console.log(document)} />
+          </IconHover>
+      </div>
 
-        <div className="w-full pt-8 dark:bg-[#1e1e1e]">
-          <Editor tasks={tasks} dark={dark} locked={locked} />
-        </div>
-        
-        <Outlet />
-      </body>
-    </html>
+      <div className="w-full pt-8 dark:bg-[#1e1e1e]">
+        <Editor tasks={tasks} dark={dark} locked={locked} />
+      </div>
+      
+      <Outlet />
+    </div>
   )
 }

@@ -56,13 +56,12 @@ pnpm --dir ./ui run start
           - will require a completely separate completed-only text model to be maintained & synced with full model
     - clean-up:
       - add "lines" as an array of objects for each line, removing separate indentation & checked arrays in stateManagement
-      - create onMount method that fires does all the stateManager house keeping (ie. checked styling, button creation)
+      - create onMount method that does all the stateManager house keeping (ie. checked styling, button creation)
     - responsive:
       - phones -> desktop
       - content area height: https://stackoverflow.com/questions/47017753/monaco-editor-dynamically-resizable
       - ensure Chrome works as well as Firefox
     - turn on spell check
-    - whenever last character isn't \n, add a \n (without moving the cursor)
     - saving (ie. to local storage)
       - consider storing strikethrough markdown along with checked status
     - find better placement for the delete button (ie. for super long lines)
@@ -89,6 +88,11 @@ pnpm --dir ./ui run start
   - when multiple lines are selected, dragging any of those grips should drag all of those lines selected as well as all children of all lines selected
   - dragging between a parent and its children should snap the indentation of the children & their descendants to at most the max allowed indentation
   - play with only snapping to a line after 1-full line of traversal after snap (same goes for indentation).  This means going back & forth 1 pixel shouldn't keep firing re-orders
+- if a child gets a new parent (ie. by dragging) automatically get rid of the extra leading spaces so that the child is at the correct indentation level (togglable via "editor mode" vs "task mode")
+- consider making tab always indent, regardless of cursor position (it should never inserts spaces midway through line) (togglable via "editor mode" vs "task mode")
+- un-doing after tabbing a parent or dragging should go back to the initial state before the drag or tab.  To do this, alter the model history so that all API model changes are merged into the keyboard model change (togglable as "concise history")
+- play with hiding "- [x]" behind the widgets...
+  - would require special handling of tab & home keys
 - add saving & loading to/from local machine (including with ctrl+S)
   - add top left save, save as, & open icons
 - add saving & loading to/from Google Drive
@@ -115,10 +119,11 @@ pnpm --dir ./ui run start
 - exports to
   - JSON (full)
   - MD (readable)
-- descriptions can have
+- add description (text) metadata
+- add label/category metadata
+- add image metadata:
   - attached images
   - in-line images
-  - content other than the title
 - keep history of all notes/props/updates
   - just store everything in the updated relationship
   - be more clever about the delete functionality
@@ -128,6 +133,7 @@ pnpm --dir ./ui run start
 - sticky scroll: enable it and use overlay widgets instead of content widgets when scrolling beyond the top
 - fix UI jank:
   - when content widgets scroll out of view (ie. a hidden div with higher z-index)
+  - rare incorrect styling on child line when undoing/redoing a parent
 - fix UX jank:
   - drag scrolling the bottom threshold scrolls down but the top threshold doesn't scroll up
 - last line should replace the checkbox with a + and insert a placeholder "List item"

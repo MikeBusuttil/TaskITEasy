@@ -104,7 +104,7 @@ class StateManager extends EventEmitter {
   checks = []
   _widgets = []
   _indentationsPreventNext = false // ensures automatic child indentation only runs once
-  _indentForceCursorUpdate = false // ensures model change doesn't move cursor
+  _forceCursorUpdate = false // ensures model change doesn't move cursor
   _dragListener = null
   _dragPrevious = { line: null, spaces: null } // last executed drag mutation
   _dragStart = { x: null, y: null } // cursor position when dragging started
@@ -162,9 +162,10 @@ class StateManager extends EventEmitter {
   updateStyling() {
     if (!this.editor) return
     const decorations = []
-    this.checks.forEach((checked, lineIndex) => {
-      if (!checked) return
+    for (const [lineIndex, checked] of this.checks.entries()) {
+      if (!checked) continue
       const lineNumber = lineIndex + 1
+      if (lineNumber > this.editor.getModel().getLineCount()) break
       const startColumn = 2*this.indentations[lineIndex] + 1
       const endColumn = this.editor.getModel().getLineMaxColumn(lineNumber)
       decorations.push({
@@ -173,7 +174,7 @@ class StateManager extends EventEmitter {
           inlineClassName: 'task-checked',
         },
       })
-    })
+    }
     this.editorDecorations.clear()
     this.editorDecorations.set(decorations)
   }
@@ -185,13 +186,22 @@ class StateManager extends EventEmitter {
     this.emit("checks", checks)
   }
 
+  appendNewline(text) {
+    this._forceCursorUpdate = true
+    this.emit("text", text + "\n")
+  }
+
   updateCursor() {
-    if (!this._indentForceCursorUpdate) return
-    if (!this.editor || !this._indentationsPreventNext) return
+    if (!this.editor || !this._forceCursorUpdate) return
     this.editor.setPosition(this.lastKnownCursorPosition)
     this._indentationsPreventNext = false
-    this._indentForceCursorUpdate = false
+    this._forceCursorUpdate = false
     this.updateStyling()
+  }
+
+  onModelChange (e) {
+    // console.log("model changed", e)
+    this.lastAction = e.isUndoing ? "undo" : e.isRedoing ? "redo" : null
   }
 
   _onChecks(checks) {
@@ -239,7 +249,7 @@ class StateManager extends EventEmitter {
       })
       this.indentations = indentations
       const text = lines.join("\n")
-      this._indentForceCursorUpdate = !this._willIndentationsChange(text)
+      this._forceCursorUpdate = !this._willIndentationsChange(text)
       this._indentationsPreventNext = true
       this.emit("text", text)
       return
@@ -391,6 +401,11 @@ const Editor = ({ tasks, dark, locked }) => {
     stateManager.updateCursor()
   }, [text, locked])
 
+  useEffect(() => {
+    if (text.slice(-1) === "\n") return
+    stateManager.appendNewline(text)
+  }, [text])
+
   // parse the tasks to extract checked statuses & text
   useEffect(() => {
     const lines = []
@@ -447,7 +462,7 @@ const Editor = ({ tasks, dark, locked }) => {
     editor.onMouseMove((e) => setMouseLine(e.target.position?.lineNumber))
     editor.onMouseLeave((e) => setMouseLine(null))
     editor.onDidChangeCursorPosition(_setCursorPosition)
-    editor.onDidChangeModelContent((e) => stateManager.lastAction = e.isUndoing ? "undo" : e.isRedoing ? "redo" : null) // Warning: This might be race condition!  When this logic is moved into the class as a method it fails to get set (in time or maybe not at all)
+    editor.onDidChangeModelContent(stateManager.onModelChange.bind(stateManager))
     // logAllProps(editor)
   }
 
